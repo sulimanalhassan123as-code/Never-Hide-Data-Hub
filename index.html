@@ -1,1 +1,58 @@
-<h1>Welcome to Never Hide Data Hub</h1>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Never Hide Data Hub - Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); width: 90%; max-width: 350px; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        #message { margin-top: 15px; font-size: 14px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    <h2>Data Hub Login</h2>
+    <input type="email" id="email" placeholder="Email Address" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button onclick="signUp()">Test Sign Up</button>
+    <p id="message"></p>
+</div>
+
+<script>
+    // PASTE YOUR TWO KEYS RIGHT HERE:
+    const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co'; 
+    const supabaseKey =  ''sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT;
+    
+    // This wakes up the connection
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // This function runs when the button is clicked
+    async function signUp() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const messageEl = document.getElementById('message');
+        
+        messageEl.innerText = "Connecting to database...";
+
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            messageEl.innerText = "Error: " + error.message;
+            messageEl.style.color = "red";
+        } else {
+            messageEl.innerText = "Success! Account securely created.";
+            messageEl.style.color = "green";
+        }
+    }
+</script>
+
+</body>
+</html>
