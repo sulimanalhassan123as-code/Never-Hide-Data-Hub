@@ -24,16 +24,16 @@
 </div>
 
 <script>
-    const supabaseUrl = ''https://obyemhakouoipngwldsg.supabase.co; 
+    const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
-    
+
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
     async function signUp() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const messageEl = document.getElementById('message');
-        
+
         messageEl.innerText = "Connecting to database...";
 
         const { data, error } = await supabaseClient.auth.signUp({
