@@ -26,12 +26,11 @@
 <script>
     // PASTE YOUR TWO KEYS RIGHT HERE:
     const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co'; 
-    const supabaseKey =  ''sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT;
+    const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     
-    // This wakes up the connection
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    // We name this 'supabaseClient' so it doesn't conflict with the Supabase CDN!
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // This function runs when the button is clicked
     async function signUp() {
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
@@ -39,7 +38,7 @@
         
         messageEl.innerText = "Connecting to database...";
 
-        const { data, error } = await supabase.auth.signUp({
+        const { data, error } = await supabaseClient.auth.signUp({
             email: email,
             password: password,
         });
