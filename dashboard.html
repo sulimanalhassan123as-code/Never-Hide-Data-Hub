@@ -10,7 +10,6 @@
         .navbar { background-color: #1a1a1a; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .navbar h1 { margin: 0; font-size: 18px; color: #4CAF50; letter-spacing: 1px; text-transform: uppercase; }
         .logout-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .logout-btn:hover { background-color: #b71c1c; }
         .container { max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .header-text { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
         .header-text h2 { margin: 0 0 5px 0; color: #222; }
@@ -19,12 +18,24 @@
         select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
         textarea { resize: vertical; }
         .submit-btn { background-color: #4CAF50; color: white; border: none; padding: 14px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; text-transform: uppercase; transition: background 0.3s; }
-        .submit-btn:hover { background-color: #388e3c; }
         .submit-btn:disabled { background-color: #888; cursor: not-allowed; }
         .history-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
-        .ticket-card { background: #f9f9f9; padding: 12px; margin-bottom: 10px; border-left: 4px solid #4CAF50; border-radius: 4px; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;}
-        .ticket-date { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-        .ticket-text { margin: 5px 0 0 0; font-size: 14px; color: #222; }
+        
+        /* New CSS for Tickets and Badges */
+        .ticket-card { background: #fff; padding: 15px; margin-bottom: 15px; border-left: 4px solid #4CAF50; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; }
+        .ticket-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; }
+        .ticket-date { font-size: 12px; color: #666; font-weight: bold; }
+        .ticket-text { margin: 0; font-size: 14px; color: #333; line-height: 1.5; }
+        
+        /* Status Badges */
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .status-reviewed { background-color: #cce5ff; color: #004085; border: 1px solid #b8daff; }
+        .status-resolved { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        
+        /* Admin Reply Box */
+        .admin-reply-box { background-color: #f1f8e9; padding: 12px; margin-top: 12px; border-radius: 5px; font-size: 13.5px; color: #2e7d32; border: 1px solid #c5e1a5; }
+        .admin-reply-box strong { color: #1b5e20; display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -41,8 +52,6 @@
     </div>
 
     <h3 style="color: #d32f2f;">Report an Issue</h3>
-    <p style="font-size: 14px; color: #555; margin-bottom: 20px;">Did your data bundle fail or a deposit not reflect? Submit a ticket to the admin here.</p>
-    
     <div class="form-group">
         <label>Issue Type:</label>
         <select id="issueType">
@@ -55,7 +64,7 @@
     
     <div class="form-group">
         <label>Transaction Details / Network:</label>
-        <textarea id="issueDetails" rows="4" placeholder="Please provide your transaction ID, network, or explain the issue..."></textarea>
+        <textarea id="issueDetails" rows="4" placeholder="Explain the issue here..."></textarea>
     </div>
 
     <button id="submitTicketBtn" class="submit-btn" onclick="submitTicket()">Submit Report</button>
@@ -67,7 +76,6 @@
 </div>
 
 <script>
-    // Hardcoded keys
     const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -76,18 +84,11 @@
 
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
-
         if (!session) {
             window.location.replace('index.html');
         } else {
             currentUserEmail = session.user.email;
             document.getElementById('userEmailDisplay').innerText = "Logged in as: " + currentUserEmail;
-            
-            // Log footprint invisibly
-            const userDevice = navigator.userAgent;
-            await supabaseClient.from('device_logs').insert([{ user_email: currentUserEmail, device_footprint: userDevice }]);
-            
-            // Fetch tickets immediately on login
             fetchMyTickets();
         }
     }
@@ -95,31 +96,50 @@
     async function fetchMyTickets() {
         const historyDiv = document.getElementById('ticketHistory');
         
-        // Grab tickets matching the logged in user, newest first
         const { data, error } = await supabaseClient
             .from('support_tickets')
             .select('*')
             .eq('user_email', currentUserEmail)
             .order('created_at', { ascending: false });
 
-        if (error) {
-            historyDiv.innerHTML = '<h3>Your Recent Reports</h3><p style="color: #ff5252;">Error loading tickets.</p>';
+        if (error || !data) {
+            historyDiv.innerHTML = '<h3>Your Recent Reports</h3><p style="color: red;">Error loading tickets.</p>';
             return;
         }
 
         if (data.length === 0) {
-            historyDiv.innerHTML = '<h3>Your Recent Reports</h3><p style="color: #888; font-style: italic; font-size: 14px;">No recent tickets found.</p>';
+            historyDiv.innerHTML = '<h3>Your Recent Reports</h3><p style="color: #888; font-style: italic;">No recent tickets found.</p>';
             return;
         }
 
-        // Build the HTML list
         let html = '<h3>Your Recent Reports</h3>';
         data.forEach(ticket => {
             const date = new Date(ticket.created_at).toLocaleDateString();
+            
+            // Handle the status logic
+            const status = ticket.status || 'Pending';
+            let statusClass = 'status-pending';
+            if (status.toLowerCase() === 'reviewed') statusClass = 'status-reviewed';
+            if (status.toLowerCase() === 'resolved') statusClass = 'status-resolved';
+
+            // Handle the admin reply logic
+            let replyHtml = '';
+            if (ticket.admin_reply && ticket.admin_reply.trim() !== '') {
+                replyHtml = `
+                <div class="admin-reply-box">
+                    <strong>Admin Reply:</strong> 
+                    ${ticket.admin_reply}
+                </div>`;
+            }
+
             html += `
                 <div class="ticket-card">
-                    <strong class="ticket-date">${date} - ${ticket.issue_type}</strong>
+                    <div class="ticket-header">
+                        <span class="ticket-date">${date} - ${ticket.issue_type}</span>
+                        <span class="status-badge ${statusClass}">${status}</span>
+                    </div>
                     <p class="ticket-text">${ticket.issue_details}</p>
+                    ${replyHtml}
                 </div>
             `;
         });
@@ -133,22 +153,22 @@
         const btn = document.getElementById('submitTicketBtn');
 
         if (details.trim() === "") {
-            alert("Please provide transaction details before submitting.");
+            alert("Please provide transaction details.");
             return;
         }
 
-        btn.innerText = "Sending to Admin...";
+        btn.innerText = "Sending...";
         btn.disabled = true;
 
         const { error } = await supabaseClient
             .from('support_tickets')
-            .insert([{ user_email: currentUserEmail, issue_type: type, issue_details: details }]);
+            .insert([{ user_email: currentUserEmail, issue_type: type, issue_details: details, status: 'Pending' }]);
 
         if (error) {
-            alert("Error sending ticket: " + error.message);
+            alert("Error: " + error.message);
         } else {
-            document.getElementById('issueDetails').value = ""; // Clear box
-            fetchMyTickets(); // Instantly refresh the list!
+            document.getElementById('issueDetails').value = ""; 
+            fetchMyTickets(); 
         }
         
         btn.innerText = "Submit Report";
