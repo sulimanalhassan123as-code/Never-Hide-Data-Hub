@@ -41,18 +41,29 @@
             // SECURITY KICK: Not logged in? Get out.
             window.location.replace('index.html');
         } else {
-            // Clearance granted: Show email and grab device details
-            document.getElementById('welcomeMessage').innerText = "Clearance granted. Welcome, " + session.user.email;
+            // Clearance granted: Show email
+            const userEmail = session.user.email;
+            document.getElementById('welcomeMessage').innerText = "Clearance granted. Welcome, " + userEmail;
             
-            // Grab the exact device and browser (User-Agent footprint)
+            // Grab the exact device footprint
             const userDevice = navigator.userAgent;
             document.getElementById('deviceInfo').innerText = "Footprint: " + userDevice;
+
+            // SILENT ADMIN TRACKER: Send data to the device_logs table
+            const { error: insertError } = await supabaseClient
+                .from('device_logs')
+                .insert([
+                    { user_email: userEmail, device_footprint: userDevice }
+                ]);
+                
+            if (insertError) {
+                console.error("Admin tracker failed to record: ", insertError);
+            }
         }
     }
 
     async function logOut() {
         await supabaseClient.auth.signOut();
-        // Kick them back to the gateway after signing out
         window.location.replace('index.html');
     }
 
