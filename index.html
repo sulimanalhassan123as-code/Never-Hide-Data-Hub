@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Never Hide Data Hub - Login</title>
+    <title>Never Hide Data Hub - Secure Login</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: sans-serif; background-color: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); width: 90%; max-width: 350px; }
+        .login-box { background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.5); width: 90%; max-width: 350px; }
         input { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; }
         button { width: 100%; padding: 10px; background-color: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         #message { margin-top: 15px; font-size: 14px; text-align: center; }
@@ -16,14 +16,16 @@
 <body>
 
 <div class="login-box">
-    <h2>Data Hub Login</h2>
+    <h2>Data Hub Gateway</h2>
     <input type="email" id="email" placeholder="Email Address" required>
     <input type="password" id="password" placeholder="Password" required>
-    <button onclick="signUp()">Test Sign Up</button>
+    <button onclick="signIn()">Secure Sign In</button>
+    <button onclick="signUp()" style="background-color: #333; margin-top: 10px;">Register New Device</button>
     <p id="message"></p>
 </div>
 
 <script>
+    // Your keys are hardcoded right here. No editing needed!
     const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
 
@@ -33,8 +35,9 @@
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
         const messageEl = document.getElementById('message');
-
-        messageEl.innerText = "Connecting to database...";
+        
+        messageEl.innerText = "Registering...";
+        messageEl.style.color = "white";
 
         const { data, error } = await supabaseClient.auth.signUp({
             email: email,
@@ -45,8 +48,34 @@
             messageEl.innerText = "Error: " + error.message;
             messageEl.style.color = "red";
         } else {
-            messageEl.innerText = "Success! Account securely created.";
+            messageEl.innerText = "Success! Securing connection...";
             messageEl.style.color = "green";
+            // Teleport to the secure dashboard after 1.5 seconds
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
+        }
+    }
+
+    async function signIn() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const messageEl = document.getElementById('message');
+        
+        messageEl.innerText = "Authenticating...";
+        messageEl.style.color = "white";
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            messageEl.innerText = "Access Denied: " + error.message;
+            messageEl.style.color = "red";
+        } else {
+            messageEl.innerText = "Clearance granted. Redirecting...";
+            messageEl.style.color = "green";
+            // Teleport to the secure dashboard after 1 second
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
         }
     }
 </script>
