@@ -18,8 +18,9 @@
         label { display: block; font-weight: bold; margin-bottom: 8px; color: #444; }
         select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
         textarea { resize: vertical; }
-        .submit-btn { background-color: #4CAF50; color: white; border: none; padding: 14px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; text-transform: uppercase; }
+        .submit-btn { background-color: #4CAF50; color: white; border: none; padding: 14px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; text-transform: uppercase; transition: background 0.3s; }
         .submit-btn:hover { background-color: #388e3c; }
+        .submit-btn:disabled { background-color: #888; cursor: not-allowed; }
         .history-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
     </style>
 </head>
@@ -54,11 +55,11 @@
         <textarea id="issueDetails" rows="4" placeholder="Please provide your transaction ID, network, or explain the issue..."></textarea>
     </div>
 
-    <button class="submit-btn" onclick="alert('This form will be connected to the database in Phase 4!')">Submit Report</button>
+    <button id="submitTicketBtn" class="submit-btn" onclick="submitTicket()">Submit Report</button>
 
     <div class="history-section">
         <h3>Your Recent Reports</h3>
-        <p style="color: #888; font-style: italic; font-size: 14px;">No recent tickets found.</p>
+        <p style="color: #888; font-style: italic; font-size: 14px;">Tickets will appear here soon.</p>
     </div>
 </div>
 
@@ -68,24 +69,57 @@
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+    let currentUserEmail = "";
+
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
 
         if (!session) {
             window.location.replace('index.html');
         } else {
-            const userEmail = session.user.email;
-            document.getElementById('userEmailDisplay').innerText = "Logged in as: " + userEmail;
+            currentUserEmail = session.user.email;
+            document.getElementById('userEmailDisplay').innerText = "Logged in as: " + currentUserEmail;
             
-            // SILENT ADMIN TRACKER - Runs perfectly without showing on screen
+            // SILENT ADMIN TRACKER
             const userDevice = navigator.userAgent;
             const { error: insertError } = await supabaseClient
                 .from('device_logs')
-                .insert([{ user_email: userEmail, device_footprint: userDevice }]);
-                
-            if (insertError) {
-                console.error("Tracker error: ", insertError);
-            }
+                .insert([{ user_email: currentUserEmail, device_footprint: userDevice }]);
+        }
+    }
+
+    // THE NEW ENGINE: Submitting the ticket securely
+    async function submitTicket() {
+        const type = document.getElementById('issueType').value;
+        const details = document.getElementById('issueDetails').value;
+        const btn = document.getElementById('submitTicketBtn');
+
+        // Prevent empty submissions
+        if (details.trim() === "") {
+            alert("Please provide transaction details before submitting.");
+            return;
+        }
+
+        // Show loading state
+        btn.innerText = "Sending to Admin...";
+        btn.disabled = true;
+
+        // Send to Supabase
+        const { error } = await supabaseClient
+            .from('support_tickets')
+            .insert([
+                { user_email: currentUserEmail, issue_type: type, issue_details: details }
+            ]);
+
+        if (error) {
+            alert("Error sending ticket: " + error.message);
+            btn.innerText = "Submit Report";
+            btn.disabled = false;
+        } else {
+            alert("Success! Your issue has been securely sent to Never Hide Data Hub support.");
+            document.getElementById('issueDetails').value = ""; // Clear the box
+            btn.innerText = "Submit Report";
+            btn.disabled = false;
         }
     }
 
