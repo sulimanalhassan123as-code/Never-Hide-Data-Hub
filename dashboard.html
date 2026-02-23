@@ -3,34 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Never Hide Data Hub - Secure Vault</title>
+    <title>Never Hide Data Hub - Command Center</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: sans-serif; background-color: #121212; color: white; display: flex; flex-direction: column; align-items: center; padding: 50px 20px; margin: 0; }
-        .dashboard-box { background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.8); border: 1px solid #333; width: 100%; max-width: 500px; }
-        h2 { color: #4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .data-text { background: #000; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 13px; color: #00ff00; word-wrap: break-word; margin-top: 20px; border-left: 3px solid #4CAF50;}
-        button { width: 100%; padding: 12px; background-color: #d32f2f; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 30px; text-transform: uppercase; }
-        button:hover { background-color: #b71c1c; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; color: #333; margin: 0; padding: 0; }
+        .navbar { background-color: #1a1a1a; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .navbar h1 { margin: 0; font-size: 18px; color: #4CAF50; letter-spacing: 1px; text-transform: uppercase; }
+        .logout-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .logout-btn:hover { background-color: #b71c1c; }
+        .container { max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header-text { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .header-text h2 { margin: 0 0 5px 0; color: #222; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: #444; }
+        select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        textarea { resize: vertical; }
+        .submit-btn { background-color: #4CAF50; color: white; border: none; padding: 14px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; text-transform: uppercase; }
+        .submit-btn:hover { background-color: #388e3c; }
+        .history-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
     </style>
 </head>
 <body>
 
-<div class="dashboard-box">
-    <h2>Secure Vault</h2>
-    <p id="welcomeMessage" style="color: #aaa;">Verifying security clearance...</p>
-    
-    <h3 style="margin-top: 30px; font-size: 16px;">Admin Diagnostic Data:</h3>
-    <div class="data-text" id="deviceInfo">Scanning device footprint...</div>
+<div class="navbar">
+    <h1>Never Hide Data Hub</h1>
+    <button class="logout-btn" onclick="logOut()">Sign Out</button>
+</div>
 
-    <button onclick="logOut()">Lock Vault & Sign Out</button>
+<div class="container">
+    <div class="header-text">
+        <h2>User Dashboard</h2>
+        <p id="userEmailDisplay" style="color: #666; font-size: 14px;">Verifying account...</p>
+    </div>
+
+    <h3 style="color: #d32f2f;">Report an Issue</h3>
+    <p style="font-size: 14px; color: #555; margin-bottom: 20px;">Did your data bundle fail or a deposit not reflect? Submit a ticket to the admin here.</p>
+    
+    <div class="form-group">
+        <label>Issue Type:</label>
+        <select id="issueType">
+            <option value="missing_deposit">Missing Deposit</option>
+            <option value="failed_bundle">Data Bundle Failed</option>
+            <option value="system_error">System Error</option>
+            <option value="other">Other Inquiry</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>Transaction Details / Network:</label>
+        <textarea id="issueDetails" rows="4" placeholder="Please provide your transaction ID, network, or explain the issue..."></textarea>
+    </div>
+
+    <button class="submit-btn" onclick="alert('This form will be connected to the database in Phase 4!')">Submit Report</button>
+
+    <div class="history-section">
+        <h3>Your Recent Reports</h3>
+        <p style="color: #888; font-style: italic; font-size: 14px;">No recent tickets found.</p>
+    </div>
 </div>
 
 <script>
     // Hardcoded keys
     const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
-    
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
     async function checkSecurity() {
@@ -40,27 +75,16 @@
             window.location.replace('index.html');
         } else {
             const userEmail = session.user.email;
-            document.getElementById('welcomeMessage').innerText = "Clearance granted. Welcome, " + userEmail;
+            document.getElementById('userEmailDisplay').innerText = "Logged in as: " + userEmail;
             
+            // SILENT ADMIN TRACKER - Runs perfectly without showing on screen
             const userDevice = navigator.userAgent;
-            const infoBox = document.getElementById('deviceInfo');
-            infoBox.innerText = "Footprint: " + userDevice;
-
-            // SILENT ADMIN TRACKER
             const { error: insertError } = await supabaseClient
                 .from('device_logs')
-                .insert([
-                    { user_email: userEmail, device_footprint: userDevice }
-                ]);
+                .insert([{ user_email: userEmail, device_footprint: userDevice }]);
                 
             if (insertError) {
-                // THE BUG CATCHER: Print the exact error to the screen
-                infoBox.innerText += "\n\nDATABASE ERROR: " + insertError.message;
-                infoBox.style.color = "#ff5252";
-                infoBox.style.borderLeft = "3px solid #ff5252";
-            } else {
-                // THE VICTORY MESSAGE
-                infoBox.innerText += "\n\n[SUCCESS: Tracker Data Saved to Supabase]";
+                console.error("Tracker error: ", insertError);
             }
         }
     }
