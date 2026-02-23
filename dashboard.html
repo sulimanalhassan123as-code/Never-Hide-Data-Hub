@@ -22,6 +22,9 @@
         .submit-btn:hover { background-color: #388e3c; }
         .submit-btn:disabled { background-color: #888; cursor: not-allowed; }
         .history-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
+        .ticket-card { background: #f9f9f9; padding: 12px; margin-bottom: 10px; border-left: 4px solid #4CAF50; border-radius: 4px; border-top: 1px solid #eee; border-right: 1px solid #eee; border-bottom: 1px solid #eee;}
+        .ticket-date { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .ticket-text { margin: 5px 0 0 0; font-size: 14px; color: #222; }
     </style>
 </head>
 <body>
@@ -43,10 +46,10 @@
     <div class="form-group">
         <label>Issue Type:</label>
         <select id="issueType">
-            <option value="missing_deposit">Missing Deposit</option>
-            <option value="failed_bundle">Data Bundle Failed</option>
-            <option value="system_error">System Error</option>
-            <option value="other">Other Inquiry</option>
+            <option value="Missing Deposit">Missing Deposit</option>
+            <option value="Data Bundle Failed">Data Bundle Failed</option>
+            <option value="System Error">System Error</option>
+            <option value="Other Inquiry">Other Inquiry</option>
         </select>
     </div>
     
@@ -57,9 +60,9 @@
 
     <button id="submitTicketBtn" class="submit-btn" onclick="submitTicket()">Submit Report</button>
 
-    <div class="history-section">
+    <div class="history-section" id="ticketHistory">
         <h3>Your Recent Reports</h3>
-        <p style="color: #888; font-style: italic; font-size: 14px;">Tickets will appear here soon.</p>
+        <p style="color: #888; font-style: italic; font-size: 14px;">Loading tickets...</p>
     </div>
 </div>
 
@@ -80,47 +83,76 @@
             currentUserEmail = session.user.email;
             document.getElementById('userEmailDisplay').innerText = "Logged in as: " + currentUserEmail;
             
-            // SILENT ADMIN TRACKER
+            // Log footprint invisibly
             const userDevice = navigator.userAgent;
-            const { error: insertError } = await supabaseClient
-                .from('device_logs')
-                .insert([{ user_email: currentUserEmail, device_footprint: userDevice }]);
+            await supabaseClient.from('device_logs').insert([{ user_email: currentUserEmail, device_footprint: userDevice }]);
+            
+            // Fetch tickets immediately on login
+            fetchMyTickets();
         }
     }
 
-    // THE NEW ENGINE: Submitting the ticket securely
+    async function fetchMyTickets() {
+        const historyDiv = document.getElementById('ticketHistory');
+        
+        // Grab tickets matching the logged in user, newest first
+        const { data, error } = await supabaseClient
+            .from('support_tickets')
+            .select('*')
+            .eq('user_email', currentUserEmail)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            historyDiv.innerHTML = '<h3>Your Recent Reports</h3><p style="color: #ff5252;">Error loading tickets.</p>';
+            return;
+        }
+
+        if (data.length === 0) {
+            historyDiv.innerHTML = '<h3>Your Recent Reports</h3><p style="color: #888; font-style: italic; font-size: 14px;">No recent tickets found.</p>';
+            return;
+        }
+
+        // Build the HTML list
+        let html = '<h3>Your Recent Reports</h3>';
+        data.forEach(ticket => {
+            const date = new Date(ticket.created_at).toLocaleDateString();
+            html += `
+                <div class="ticket-card">
+                    <strong class="ticket-date">${date} - ${ticket.issue_type}</strong>
+                    <p class="ticket-text">${ticket.issue_details}</p>
+                </div>
+            `;
+        });
+        
+        historyDiv.innerHTML = html;
+    }
+
     async function submitTicket() {
         const type = document.getElementById('issueType').value;
         const details = document.getElementById('issueDetails').value;
         const btn = document.getElementById('submitTicketBtn');
 
-        // Prevent empty submissions
         if (details.trim() === "") {
             alert("Please provide transaction details before submitting.");
             return;
         }
 
-        // Show loading state
         btn.innerText = "Sending to Admin...";
         btn.disabled = true;
 
-        // Send to Supabase
         const { error } = await supabaseClient
             .from('support_tickets')
-            .insert([
-                { user_email: currentUserEmail, issue_type: type, issue_details: details }
-            ]);
+            .insert([{ user_email: currentUserEmail, issue_type: type, issue_details: details }]);
 
         if (error) {
             alert("Error sending ticket: " + error.message);
-            btn.innerText = "Submit Report";
-            btn.disabled = false;
         } else {
-            alert("Success! Your issue has been securely sent to Never Hide Data Hub support.");
-            document.getElementById('issueDetails').value = ""; // Clear the box
-            btn.innerText = "Submit Report";
-            btn.disabled = false;
+            document.getElementById('issueDetails').value = ""; // Clear box
+            fetchMyTickets(); // Instantly refresh the list!
         }
+        
+        btn.innerText = "Submit Report";
+        btn.disabled = false;
     }
 
     async function logOut() {
