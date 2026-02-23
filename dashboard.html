@@ -27,25 +27,22 @@
 </div>
 
 <script>
-    // Hardcoded keys - No editing needed!
+    // Hardcoded keys
     const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // This function runs the millisecond the page loads
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
 
         if (!session) {
-            // SECURITY KICK: Not logged in? Get out.
+            // Kick to login if not authenticated
             window.location.replace('index.html');
         } else {
-            // Clearance granted: Show email
             const userEmail = session.user.email;
             document.getElementById('welcomeMessage').innerText = "Clearance granted. Welcome, " + userEmail;
             
-            // Grab the exact device footprint
             const userDevice = navigator.userAgent;
             document.getElementById('deviceInfo').innerText = "Footprint: " + userDevice;
 
@@ -57,7 +54,7 @@
                 ]);
                 
             if (insertError) {
-                console.error("Admin tracker failed to record: ", insertError);
+                console.error("Tracker error: ", insertError);
             }
         }
     }
@@ -67,7 +64,6 @@
         window.location.replace('index.html');
     }
 
-    // Run the security check immediately
     checkSecurity();
 </script>
 
