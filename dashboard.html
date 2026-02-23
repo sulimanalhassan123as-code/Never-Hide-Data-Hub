@@ -37,16 +37,16 @@
         const { data: { session } } = await supabaseClient.auth.getSession();
 
         if (!session) {
-            // Kick to login if not authenticated
             window.location.replace('index.html');
         } else {
             const userEmail = session.user.email;
             document.getElementById('welcomeMessage').innerText = "Clearance granted. Welcome, " + userEmail;
             
             const userDevice = navigator.userAgent;
-            document.getElementById('deviceInfo').innerText = "Footprint: " + userDevice;
+            const infoBox = document.getElementById('deviceInfo');
+            infoBox.innerText = "Footprint: " + userDevice;
 
-            // SILENT ADMIN TRACKER: Send data to the device_logs table
+            // SILENT ADMIN TRACKER
             const { error: insertError } = await supabaseClient
                 .from('device_logs')
                 .insert([
@@ -54,7 +54,13 @@
                 ]);
                 
             if (insertError) {
-                console.error("Tracker error: ", insertError);
+                // THE BUG CATCHER: Print the exact error to the screen
+                infoBox.innerText += "\n\nDATABASE ERROR: " + insertError.message;
+                infoBox.style.color = "#ff5252";
+                infoBox.style.borderLeft = "3px solid #ff5252";
+            } else {
+                // THE VICTORY MESSAGE
+                infoBox.innerText += "\n\n[SUCCESS: Tracker Data Saved to Supabase]";
             }
         }
     }
