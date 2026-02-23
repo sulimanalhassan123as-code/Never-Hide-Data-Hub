@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Never Hide Data Hub - Admin Portal</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e3f2fd; color: #333; margin: 0; padding: 0; }
+        .navbar { background-color: #0d47a1; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .navbar h1 { margin: 0; font-size: 18px; color: #90caf9; letter-spacing: 1px; text-transform: uppercase; }
+        .logout-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .container { max-width: 800px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header-text { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .ticket-card { background: #fff; padding: 15px; margin-bottom: 20px; border-left: 5px solid #0d47a1; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; }
+        .ticket-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; font-size: 14px; }
+        .ticket-text { margin: 10px 0; font-size: 15px; color: #222; background: #f9f9f9; padding: 10px; border-radius: 4px; }
+        .admin-controls { display: flex; gap: 10px; margin-top: 15px; align-items: center; }
+        select, input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+        input[type="text"] { flex-grow: 1; }
+        .update-btn { background-color: #1976d2; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .update-btn:hover { background-color: #115293; }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <h1>Data Hub - BOSS DASHBOARD</h1>
+    <button class="logout-btn" onclick="logOut()">Sign Out</button>
+</div>
+
+<div class="container">
+    <div class="header-text">
+        <h2>Master Support Queue</h2>
+        <p style="color: #666; font-size: 14px;">View and resolve all customer issues here.</p>
+    </div>
+
+    <div id="allTicketsContainer">
+        <p style="color: #888; font-style: italic;">Loading master database...</p>
+    </div>
+</div>
+
+<script>
+    // Hardcoded keys
+    const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
+    const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const ADMIN_EMAIL = "admin@datahub.com"; // YOUR ADMIN EMAIL
+
+    async function checkSecurity() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+
+        if (!session) {
+            window.location.replace('index.html');
+            return;
+        }
+
+        const userEmail = session.user.email;
+        
+        // The Boss Bouncer: Kick out anyone who isn't the admin
+        if (userEmail !== ADMIN_EMAIL) {
+            alert("SECURITY ALERT: You are not authorized to view the Boss Dashboard.");
+            window.location.replace('dashboard.html');
+            return;
+        }
+
+        // If it is the boss, load all tickets
+        fetchAllTickets();
+    }
+
+    async function fetchAllTickets() {
+        const container = document.getElementById('allTicketsContainer');
+        
+        // Fetch EVERY ticket, newest first
+        const { data, error } = await supabaseClient
+            .from('support_tickets')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error || !data) {
+            container.innerHTML = '<p style="color: red;">Error loading tickets.</p>';
+            return;
+        }
+
+        if (data.length === 0) {
+            container.innerHTML = '<p style="color: #888; font-style: italic;">No tickets in the queue! You are all caught up.</p>';
+            return;
+        }
+
+        let html = '';
+        data.forEach(ticket => {
+            const date = new Date(ticket.created_at).toLocaleString();
+            const currentReply = ticket.admin_reply ? ticket.admin_reply : "";
+            
+            html += `
+                <div class="ticket-card" id="ticket-${ticket.id}">
+                    <div class="ticket-header">
+                        <strong>User: ${ticket.user_email}</strong>
+                        <span style="color: #666;">${date} - <strong>${ticket.issue_type}</strong></span>
+                    </div>
+                    <div class="ticket-text">${ticket.issue_details}</div>
+                    
+                    <div class="admin-controls">
+                        <select id="status-${ticket.id}">
+                            <option value="Pending" ${ticket.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                            <option value="Reviewed" ${ticket.status === 'Reviewed' ? 'selected' : ''}>Reviewed</option>
+                            <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                        </select>
+                        <input type="text" id="reply-${ticket.id}" placeholder="Type your reply to the customer..." value="${currentReply}">
+                        <button class="update-btn" onclick="updateTicket('${ticket.id}')">Save Update</button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    }
+
+    async function updateTicket(ticketId) {
+        const newStatus = document.getElementById(`status-${ticketId}`).value;
+        const newReply = document.getElementById(`reply-${ticketId}`).value;
+        
+        // Update the database
+        const { error } = await supabaseClient
+            .from('support_tickets')
+            .update({ status: newStatus, admin_reply: newReply })
+            .eq('id', ticketId);
+
+        if (error) {
+            alert("Error updating ticket: " + error.message);
+        } else {
+            alert("Ticket updated successfully! The user will now see this on their dashboard.");
+            fetchAllTickets(); // Refresh the list
+        }
+    }
+
+    async function logOut() {
+        await supabaseClient.auth.signOut();
+        window.location.replace('index.html');
+    }
+
+    checkSecurity();
+</script>
+
+</body>
+</html>
