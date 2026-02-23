@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Never Hide Data Hub - Secure Vault</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #121212; color: white; display: flex; flex-direction: column; align-items: center; padding: 50px 20px; margin: 0; }
+        .dashboard-box { background-color: #1e1e1e; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.8); border: 1px solid #333; width: 100%; max-width: 500px; }
+        h2 { color: #4CAF50; border-bottom: 1px solid #333; padding-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .data-text { background: #000; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 13px; color: #00ff00; word-wrap: break-word; margin-top: 20px; border-left: 3px solid #4CAF50;}
+        button { width: 100%; padding: 12px; background-color: #d32f2f; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 30px; text-transform: uppercase; }
+        button:hover { background-color: #b71c1c; }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-box">
+    <h2>Secure Vault</h2>
+    <p id="welcomeMessage" style="color: #aaa;">Verifying security clearance...</p>
+    
+    <h3 style="margin-top: 30px; font-size: 16px;">Admin Diagnostic Data:</h3>
+    <div class="data-text" id="deviceInfo">Scanning device footprint...</div>
+
+    <button onclick="logOut()">Lock Vault & Sign Out</button>
+</div>
+
+<script>
+    // Hardcoded keys - No editing needed!
+    const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
+    const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
+    
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // This function runs the millisecond the page loads
+    async function checkSecurity() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+
+        if (!session) {
+            // SECURITY KICK: Not logged in? Get out.
+            window.location.replace('index.html');
+        } else {
+            // Clearance granted: Show email and grab device details
+            document.getElementById('welcomeMessage').innerText = "Clearance granted. Welcome, " + session.user.email;
+            
+            // Grab the exact device and browser (User-Agent footprint)
+            const userDevice = navigator.userAgent;
+            document.getElementById('deviceInfo').innerText = "Footprint: " + userDevice;
+        }
+    }
+
+    async function logOut() {
+        await supabaseClient.auth.signOut();
+        // Kick them back to the gateway after signing out
+        window.location.replace('index.html');
+    }
+
+    // Run the security check immediately
+    checkSecurity();
+</script>
+
+</body>
+</html>
