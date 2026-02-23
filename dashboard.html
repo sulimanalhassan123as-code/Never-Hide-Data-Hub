@@ -15,27 +15,29 @@
         .header-text h2 { margin: 0 0 5px 0; color: #222; }
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: bold; margin-bottom: 8px; color: #444; }
-        select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
+        select, textarea, input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
         textarea { resize: vertical; }
         .submit-btn { background-color: #4CAF50; color: white; border: none; padding: 14px; border-radius: 5px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; text-transform: uppercase; transition: background 0.3s; }
-        .submit-btn:disabled { background-color: #888; cursor: not-allowed; }
-        .history-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
         
-        /* New CSS for Tickets and Badges */
+        /* Storefront Grid CSS */
+        .store-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .product-card { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
+        .card-mtn { border-top: 5px solid #ffcc00; }
+        .card-telecel { border-top: 5px solid #d32f2f; }
+        .card-ecg { border-top: 5px solid #0d47a1; }
+        .buy-btn { color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        
+        /* History CSS */
+        .history-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
         .ticket-card { background: #fff; padding: 15px; margin-bottom: 15px; border-left: 4px solid #4CAF50; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; }
         .ticket-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; }
         .ticket-date { font-size: 12px; color: #666; font-weight: bold; }
         .ticket-text { margin: 0; font-size: 14px; color: #333; line-height: 1.5; }
-        
-        /* Status Badges */
-        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
         .status-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
         .status-reviewed { background-color: #cce5ff; color: #004085; border: 1px solid #b8daff; }
         .status-resolved { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        
-        /* Admin Reply Box */
         .admin-reply-box { background-color: #f1f8e9; padding: 12px; margin-top: 12px; border-radius: 5px; font-size: 13.5px; color: #2e7d32; border: 1px solid #c5e1a5; }
-        .admin-reply-box strong { color: #1b5e20; display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -51,27 +53,56 @@
         <p id="userEmailDisplay" style="color: #666; font-size: 14px;">Verifying account...</p>
     </div>
 
-    <h3 style="color: #d32f2f;">Report an Issue</h3>
-    <div class="form-group">
-        <label>Issue Type:</label>
-        <select id="issueType">
-            <option value="Missing Deposit">Missing Deposit</option>
-            <option value="Data Bundle Failed">Data Bundle Failed</option>
-            <option value="System Error">System Error</option>
-            <option value="Other Inquiry">Other Inquiry</option>
-        </select>
-    </div>
-    
-    <div class="form-group">
-        <label>Transaction Details / Network:</label>
-        <textarea id="issueDetails" rows="4" placeholder="Explain the issue here..."></textarea>
+    <div id="profileSection" style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #ffeeba;">
+        <h3 style="color: #856404; margin-top: 0;">Step 1: Save Your WhatsApp Number</h3>
+        <p style="font-size: 14px; color: #666;">You must save your WhatsApp number so the Admin can deliver your data bundles directly to you.</p>
+        <div class="form-group">
+            <input type="text" id="waNumber" placeholder="e.g., 024XXXXXXX">
+        </div>
+        <button class="submit-btn" style="background-color: #856404;" onclick="saveProfile()">Save Number to Unlock Store</button>
     </div>
 
-    <button id="submitTicketBtn" class="submit-btn" onclick="submitTicket()">Submit Report</button>
+    <div id="storefrontSection" style="display: none;">
+        <h3 style="color: #222; margin-bottom: 15px;">Available Services</h3>
+        <div class="store-grid">
+            <div class="product-card card-mtn">
+                <h4 style="margin: 0 0 5px 0;">MTN Data</h4>
+                <p style="font-size: 18px; font-weight: bold; margin: 0 0 10px 0;">10GB / 100GHS</p>
+                <button class="buy-btn" style="background: #ffcc00; color: #000;" onclick="buyBundle('MTN 10GB Bundle')">Buy Now</button>
+            </div>
+            <div class="product-card card-telecel">
+                <h4 style="margin: 0 0 5px 0;">Telecel Data</h4>
+                <p style="font-size: 18px; font-weight: bold; margin: 0 0 10px 0;">15GB / 100GHS</p>
+                <button class="buy-btn" style="background: #d32f2f;" onclick="buyBundle('Telecel 15GB Bundle')">Buy Now</button>
+            </div>
+            <div class="product-card card-ecg">
+                <h4 style="margin: 0 0 5px 0;">ECG Bill</h4>
+                <p style="font-size: 14px; color: #666; margin: 0 0 10px 0;">Pay prepaid meters securely.</p>
+                <button class="buy-btn" style="background: #0d47a1;" onclick="buyBundle('ECG Bill Payment')">Initiate</button>
+            </div>
+        </div>
+
+        <hr style="border: 1px solid #eee; margin: 30px 0;">
+
+        <h3 style="color: #d32f2f;">Report an Issue</h3>
+        <div class="form-group">
+            <label>Issue Type:</label>
+            <select id="issueType">
+                <option value="Missing Deposit">Missing Deposit</option>
+                <option value="Data Bundle Failed">Data Bundle Failed</option>
+                <option value="System Error">System Error</option>
+                <option value="Other Inquiry">Other Inquiry</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <textarea id="issueDetails" rows="3" placeholder="Explain the issue here..."></textarea>
+        </div>
+        <button class="submit-btn" onclick="submitTicket()">Submit Report</button>
+    </div>
 
     <div class="history-section" id="ticketHistory">
-        <h3>Your Recent Reports</h3>
-        <p style="color: #888; font-style: italic; font-size: 14px;">Loading tickets...</p>
+        <h3>Your Orders & Reports</h3>
+        <p style="color: #888; font-style: italic; font-size: 14px;">Loading...</p>
     </div>
 </div>
 
@@ -81,6 +112,7 @@
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
     let currentUserEmail = "";
+    let userWhatsApp = "";
 
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -89,47 +121,85 @@
         } else {
             currentUserEmail = session.user.email;
             document.getElementById('userEmailDisplay').innerText = "Logged in as: " + currentUserEmail;
+            fetchProfile();
             fetchMyTickets();
+        }
+    }
+
+    async function fetchProfile() {
+        const { data, error } = await supabaseClient
+            .from('user_profiles')
+            .select('*')
+            .eq('user_email', currentUserEmail);
+
+        if (data && data.length > 0) {
+            userWhatsApp = data[0].whatsapp_number;
+            document.getElementById('profileSection').style.display = 'none';
+            document.getElementById('storefrontSection').style.display = 'block';
+        } else {
+            document.getElementById('profileSection').style.display = 'block';
+            document.getElementById('storefrontSection').style.display = 'none';
+        }
+    }
+
+    async function saveProfile() {
+        const num = document.getElementById('waNumber').value;
+        if (num.trim() === "") {
+            alert("Please enter a valid WhatsApp number.");
+            return;
+        }
+        
+        const { error } = await supabaseClient
+            .from('user_profiles')
+            .insert([{ user_email: currentUserEmail, whatsapp_number: num }]);
+            
+        if (error) {
+            alert("Error saving profile: " + error.message);
+        } else {
+            alert("Number saved! The storefront is now unlocked.");
+            fetchProfile(); 
+        }
+    }
+
+    async function buyBundle(productName) {
+        const details = `AUTOMATED ORDER: I want to buy [${productName}]. My saved WhatsApp number is ${userWhatsApp}.`;
+        
+        const { error } = await supabaseClient
+            .from('support_tickets')
+            .insert([{ user_email: currentUserEmail, issue_type: 'Purchase Request', issue_details: details, status: 'Pending' }]);
+
+        if (error) {
+            alert("Error placing order: " + error.message);
+        } else {
+            alert("Order placed! The Admin will process this shortly.");
+            fetchMyTickets(); 
         }
     }
 
     async function fetchMyTickets() {
         const historyDiv = document.getElementById('ticketHistory');
-        
         const { data, error } = await supabaseClient
             .from('support_tickets')
             .select('*')
             .eq('user_email', currentUserEmail)
             .order('created_at', { ascending: false });
 
-        if (error || !data) {
-            historyDiv.innerHTML = '<h3>Your Recent Reports</h3><p style="color: red;">Error loading tickets.</p>';
+        if (error || !data || data.length === 0) {
+            historyDiv.innerHTML = '<h3>Your Orders & Reports</h3><p style="color: #888; font-style: italic;">No history found.</p>';
             return;
         }
 
-        if (data.length === 0) {
-            historyDiv.innerHTML = '<h3>Your Recent Reports</h3><p style="color: #888; font-style: italic;">No recent tickets found.</p>';
-            return;
-        }
-
-        let html = '<h3>Your Recent Reports</h3>';
+        let html = '<h3>Your Orders & Reports</h3>';
         data.forEach(ticket => {
             const date = new Date(ticket.created_at).toLocaleDateString();
-            
-            // Handle the status logic
             const status = ticket.status || 'Pending';
             let statusClass = 'status-pending';
             if (status.toLowerCase() === 'reviewed') statusClass = 'status-reviewed';
             if (status.toLowerCase() === 'resolved') statusClass = 'status-resolved';
 
-            // Handle the admin reply logic
             let replyHtml = '';
             if (ticket.admin_reply && ticket.admin_reply.trim() !== '') {
-                replyHtml = `
-                <div class="admin-reply-box">
-                    <strong>Admin Reply:</strong> 
-                    ${ticket.admin_reply}
-                </div>`;
+                replyHtml = `<div class="admin-reply-box"><strong>Admin Reply:</strong> ${ticket.admin_reply}</div>`;
             }
 
             html += `
@@ -143,36 +213,22 @@
                 </div>
             `;
         });
-        
         historyDiv.innerHTML = html;
     }
 
     async function submitTicket() {
         const type = document.getElementById('issueType').value;
         const details = document.getElementById('issueDetails').value;
-        const btn = document.getElementById('submitTicketBtn');
-
-        if (details.trim() === "") {
-            alert("Please provide transaction details.");
-            return;
-        }
-
-        btn.innerText = "Sending...";
-        btn.disabled = true;
+        if (details.trim() === "") { alert("Please provide details."); return; }
 
         const { error } = await supabaseClient
             .from('support_tickets')
             .insert([{ user_email: currentUserEmail, issue_type: type, issue_details: details, status: 'Pending' }]);
 
-        if (error) {
-            alert("Error: " + error.message);
-        } else {
+        if (!error) {
             document.getElementById('issueDetails').value = ""; 
             fetchMyTickets(); 
         }
-        
-        btn.innerText = "Submit Report";
-        btn.disabled = false;
     }
 
     async function logOut() {
