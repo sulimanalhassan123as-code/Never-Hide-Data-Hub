@@ -10,16 +10,22 @@
         .navbar { background-color: #0d47a1; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .navbar h1 { margin: 0; font-size: 18px; color: #90caf9; letter-spacing: 1px; text-transform: uppercase; }
         .logout-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .container { max-width: 800px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .header-text { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .container { max-width: 800px; margin: 30px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header-text { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
         .ticket-card { background: #fff; padding: 15px; margin-bottom: 20px; border-left: 5px solid #0d47a1; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; }
-        .ticket-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; font-size: 14px; }
-        .ticket-text { margin: 10px 0; font-size: 15px; color: #222; background: #f9f9f9; padding: 10px; border-radius: 4px; }
-        .admin-controls { display: flex; gap: 10px; margin-top: 15px; align-items: center; }
+        .product-card { background: #fff; padding: 15px; margin-bottom: 15px; border-left: 5px solid #ff9800; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 12px; font-size: 14px; }
+        .ticket-text { margin: 10px 0; font-size: 15px; color: #222; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
+        .admin-controls { display: flex; gap: 10px; margin-top: 15px; align-items: center; flex-wrap: wrap; width: 100%; }
         select, input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
-        input[type="text"] { flex-grow: 1; }
+        input[type="text"] { flex-grow: 1; min-width: 200px; }
         .update-btn { background-color: #1976d2; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .update-btn:hover { background-color: #115293; }
+        .add-btn { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; font-size: 16px;}
+        .delete-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .wa-btn { background-color: #25D366; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -29,110 +35,179 @@
     <button class="logout-btn" onclick="logOut()">Sign Out</button>
 </div>
 
-<div class="container">
+<div class="container" style="border-top: 5px solid #ff9800;">
     <div class="header-text">
-        <h2>Master Support Queue</h2>
-        <p style="color: #666; font-size: 14px;">View and resolve all customer issues here.</p>
+        <h2 style="color: #e65100; margin-top: 0;">📦 Storefront Inventory</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 0;">Add new bundles, ECG services, or affiliate links to your live website.</p>
     </div>
 
+    <div style="background: #fff8e1; padding: 20px; border-radius: 8px; border: 1px solid #ffecb3; margin-bottom: 30px;">
+        <h3 style="margin-top: 0; color: #ff8f00;">Add New Product</h3>
+        <div class="form-grid">
+            <input type="text" id="newProdName" placeholder="Product Name (e.g. MTN 10GB)">
+            <input type="text" id="newProdPrice" placeholder="Price (e.g. 100 GHS)">
+            <input type="text" id="newProdDesc" placeholder="Description or Affiliate Link">
+            <select id="newProdCat">
+                <option value="mtn">MTN</option>
+                <option value="telecel">Telecel</option>
+                <option value="airteltigo">AirtelTigo</option>
+                <option value="ecg">ECG Bill</option>
+                <option value="ad">Affiliate/Ad</option>
+            </select>
+        </div>
+        <button class="add-btn" onclick="addProduct()">Publish to Storefront</button>
+    </div>
+
+    <h3 style="color: #333;">Live Products</h3>
+    <div id="allProductsContainer">
+        <p style="color: #888; font-style: italic;">Loading inventory...</p>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header-text">
+        <h2>🛠️ Master Support & Order Queue</h2>
+    </div>
     <div id="allTicketsContainer">
         <p style="color: #888; font-style: italic;">Loading master database...</p>
     </div>
 </div>
 
 <script>
-    // Hardcoded keys
     const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-    const ADMIN_EMAIL = "admin@datahub.com"; // YOUR ADMIN EMAIL
+    const ADMIN_EMAIL = "admin@datahub.com"; 
 
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
-
-        if (!session) {
+        if (!session || session.user.email !== ADMIN_EMAIL) {
             window.location.replace('index.html');
             return;
         }
-
-        const userEmail = session.user.email;
-        
-        // The Boss Bouncer: Kick out anyone who isn't the admin
-        if (userEmail !== ADMIN_EMAIL) {
-            alert("SECURITY ALERT: You are not authorized to view the Boss Dashboard.");
-            window.location.replace('dashboard.html');
-            return;
-        }
-
-        // If it is the boss, load all tickets
+        fetchProducts();
         fetchAllTickets();
     }
 
-    async function fetchAllTickets() {
-        const container = document.getElementById('allTicketsContainer');
-        
-        // Fetch EVERY ticket, newest first
-        const { data, error } = await supabaseClient
-            .from('support_tickets')
-            .select('*')
-            .order('created_at', { ascending: false });
+    // --- INVENTORY LOGIC ---
+    async function fetchProducts() {
+        const container = document.getElementById('allProductsContainer');
+        const { data, error } = await supabaseClient.from('products').select('*').order('id', { ascending: false });
 
-        if (error || !data) {
-            container.innerHTML = '<p style="color: red;">Error loading tickets.</p>';
-            return;
-        }
-
-        if (data.length === 0) {
-            container.innerHTML = '<p style="color: #888; font-style: italic;">No tickets in the queue! You are all caught up.</p>';
-            return;
-        }
+        if (error || !data) { container.innerHTML = '<p style="color: red;">Error loading inventory.</p>'; return; }
+        if (data.length === 0) { container.innerHTML = '<p style="color: #888;">No products yet. Add your first bundle above!</p>'; return; }
 
         let html = '';
-        data.forEach(ticket => {
+        data.forEach(prod => {
+            html += `
+                <div class="product-card">
+                    <div style="flex-grow: 1;">
+                        <strong>${prod.name}</strong> - <span style="color: #2e7d32; font-weight: bold;">${prod.price}</span><br>
+                        <span style="font-size: 12px; color: #666; text-transform: uppercase;">Category: ${prod.category}</span>
+                    </div>
+                    <div class="admin-controls" style="width: auto; margin-top: 0;">
+                        <select id="prod-status-${prod.id}">
+                            <option value="Available" ${prod.status === 'Available' ? 'selected' : ''}>🟢 Available</option>
+                            <option value="Coming Soon" ${prod.status === 'Coming Soon' ? 'selected' : ''}>🟡 Coming Soon</option>
+                            <option value="Out of Stock" ${prod.status === 'Out of Stock' ? 'selected' : ''}>🔴 Out of Stock</option>
+                        </select>
+                        <button class="update-btn" onclick="updateProdStatus('${prod.id}')">Update</button>
+                        <button class="delete-btn" onclick="deleteProduct('${prod.id}')">🗑️</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function addProduct() {
+        const name = document.getElementById('newProdName').value;
+        const price = document.getElementById('newProdPrice').value;
+        const desc = document.getElementById('newProdDesc').value;
+        const cat = document.getElementById('newProdCat').value;
+
+        if(!name || !price) { alert("Name and Price are required!"); return; }
+
+        const { error } = await supabaseClient.from('products').insert([{ 
+            name: name, price: price, description: desc, category: cat, status: 'Available' 
+        }]);
+
+        if (error) alert("Error adding product: " + error.message);
+        else {
+            document.getElementById('newProdName').value = '';
+            document.getElementById('newProdPrice').value = '';
+            document.getElementById('newProdDesc').value = '';
+            fetchProducts();
+        }
+    }
+
+    async function updateProdStatus(id) {
+        const newStatus = document.getElementById(`prod-status-${id}`).value;
+        const { error } = await supabaseClient.from('products').update({ status: newStatus }).eq('id', id);
+        if (error) alert("Error: " + error.message); else { alert("Status updated!"); fetchProducts(); }
+    }
+
+    async function deleteProduct(id) {
+        if(confirm("Are you sure you want to delete this product forever?")) {
+            const { error } = await supabaseClient.from('products').delete().eq('id', id);
+            if (error) alert("Error: " + error.message); else fetchProducts();
+        }
+    }
+
+    // --- TICKET LOGIC (unchanged) ---
+    async function fetchAllTickets() {
+        const container = document.getElementById('allTicketsContainer');
+        const { data: tickets, error: tError } = await supabaseClient.from('support_tickets').select('*').order('created_at', { ascending: false });
+        const { data: profiles, error: pError } = await supabaseClient.from('user_profiles').select('*');
+
+        if (tError || !tickets) { container.innerHTML = '<p style="color: red;">Error loading tickets.</p>'; return; }
+        if (tickets.length === 0) { container.innerHTML = '<p style="color: #888;">No tickets in the queue!</p>'; return; }
+
+        const phoneBook = {};
+        if (profiles) profiles.forEach(p => { phoneBook[p.user_email] = p.whatsapp_number; });
+
+        let html = '';
+        tickets.forEach(ticket => {
             const date = new Date(ticket.created_at).toLocaleString();
             const currentReply = ticket.admin_reply ? ticket.admin_reply : "";
-            
+            const userPhone = phoneBook[ticket.user_email];
+            let waButton = "";
+            if (userPhone) {
+                let cleanNum = userPhone.replace(/\s+/g, '');
+                if (cleanNum.startsWith('0')) cleanNum = '233' + cleanNum.substring(1);
+                else if (!cleanNum.startsWith('233') && !cleanNum.startsWith('+')) cleanNum = '233' + cleanNum;
+                cleanNum = cleanNum.replace('+', '');
+                const waMessage = encodeURIComponent(`Hello! This is the Admin of Never Hide Data Hub. Re: ${ticket.issue_type}`);
+                waButton = `<a href="https://wa.me/${cleanNum}?text=${waMessage}" target="_blank" class="wa-btn">💬 Chat on WhatsApp</a>`;
+            }
+
             html += `
                 <div class="ticket-card" id="ticket-${ticket.id}">
                     <div class="ticket-header">
-                        <strong>User: ${ticket.user_email}</strong>
-                        <span style="color: #666;">${date} - <strong>${ticket.issue_type}</strong></span>
+                        <div><strong>User: ${ticket.user_email}</strong><br>${waButton}</div>
+                        <div style="text-align: right; color: #666;">${date}<br><strong style="color: #d32f2f;">${ticket.issue_type}</strong></div>
                     </div>
                     <div class="ticket-text">${ticket.issue_details}</div>
-                    
                     <div class="admin-controls">
                         <select id="status-${ticket.id}">
                             <option value="Pending" ${ticket.status === 'Pending' ? 'selected' : ''}>Pending</option>
                             <option value="Reviewed" ${ticket.status === 'Reviewed' ? 'selected' : ''}>Reviewed</option>
                             <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
                         </select>
-                        <input type="text" id="reply-${ticket.id}" placeholder="Type your reply to the customer..." value="${currentReply}">
-                        <button class="update-btn" onclick="updateTicket('${ticket.id}')">Save Update</button>
+                        <input type="text" id="reply-${ticket.id}" placeholder="Type your reply..." value="${currentReply}">
+                        <button class="update-btn" onclick="updateTicket('${ticket.id}')">Save</button>
                     </div>
                 </div>
             `;
         });
-        
         container.innerHTML = html;
     }
 
     async function updateTicket(ticketId) {
         const newStatus = document.getElementById(`status-${ticketId}`).value;
         const newReply = document.getElementById(`reply-${ticketId}`).value;
-        
-        // Update the database
-        const { error } = await supabaseClient
-            .from('support_tickets')
-            .update({ status: newStatus, admin_reply: newReply })
-            .eq('id', ticketId);
-
-        if (error) {
-            alert("Error updating ticket: " + error.message);
-        } else {
-            alert("Ticket updated successfully! The user will now see this on their dashboard.");
-            fetchAllTickets(); // Refresh the list
-        }
+        const { error } = await supabaseClient.from('support_tickets').update({ status: newStatus, admin_reply: newReply }).eq('id', ticketId);
+        if (error) alert("Error: " + error.message); else { alert("Updated successfully!"); fetchAllTickets(); }
     }
 
     async function logOut() {
