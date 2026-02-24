@@ -11,7 +11,12 @@
         .navbar h1 { margin: 0; font-size: 18px; color: #4CAF50; letter-spacing: 1px; text-transform: uppercase; }
         .logout-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
         .container { max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .header-text { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .header-text { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; position: relative; }
+        
+        /* New Edit Profile CSS */
+        .edit-btn { background: none; border: none; color: #1976d2; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0; text-decoration: underline; margin-top: 5px; display: inline-block; }
+        .edit-form { display: none; background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #bbdefb; }
+        
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: bold; margin-bottom: 8px; color: #444; }
         select, textarea, input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-family: inherit; }
@@ -55,7 +60,18 @@
 <div class="container">
     <div class="header-text">
         <h2>User Dashboard</h2>
-        <p id="userEmailDisplay" style="color: #666; font-size: 14px;">Verifying account...</p>
+        <p id="userEmailDisplay" style="color: #666; font-size: 14px; margin-bottom: 5px;">Verifying account...</p>
+        
+        <button id="showEditBtn" class="edit-btn" style="display: none;" onclick="toggleEditProfile()">⚙️ Edit WhatsApp Number</button>
+        
+        <div id="accountSettings" class="edit-form">
+            <h4 style="margin: 0 0 10px 0; color: #0d47a1;">Update Delivery Number</h4>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="editWaNumber" placeholder="Enter new number..." style="flex-grow: 1;">
+                <button class="submit-btn" style="width: auto; padding: 10px 20px; background-color: #1976d2;" onclick="updateProfile()">Save</button>
+            </div>
+            <button class="edit-btn" style="color: #d32f2f; margin-top: 10px;" onclick="toggleEditProfile()">Cancel</button>
+        </div>
     </div>
 
     <div id="profileSection" style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #ffeeba;">
@@ -77,7 +93,6 @@
         </div>
 
         <h3 style="color: #222; margin-bottom: 15px;">Live Storefront</h3>
-        
         <div class="store-grid" id="dynamicStorefront">
             <p style="color: #888; font-style: italic;">Loading live deals...</p>
         </div>
@@ -127,10 +142,16 @@
             userWhatsApp = data[0].whatsapp_number;
             document.getElementById('profileSection').style.display = 'none';
             document.getElementById('storefrontSection').style.display = 'block';
+            
+            // Unhide the edit button and update the display text
+            document.getElementById('showEditBtn').style.display = 'inline-block';
+            document.getElementById('userEmailDisplay').innerHTML = `Logged in as: <strong>${currentUserEmail}</strong><br>Delivery Number: <span style="color: #2e7d32; font-weight: bold;">${userWhatsApp}</span>`;
+            
             fetchLiveProducts(); 
         } else {
             document.getElementById('profileSection').style.display = 'block';
             document.getElementById('storefrontSection').style.display = 'none';
+            document.getElementById('showEditBtn').style.display = 'none';
         }
     }
 
@@ -139,6 +160,32 @@
         if (!num) return;
         const { error } = await supabaseClient.from('user_profiles').insert([{ user_email: currentUserEmail, whatsapp_number: num }]);
         if (!error) fetchProfile();
+    }
+
+    // New Function: Toggle Edit Menu
+    function toggleEditProfile() {
+        const div = document.getElementById('accountSettings');
+        div.style.display = div.style.display === 'none' ? 'block' : 'none';
+        document.getElementById('editWaNumber').value = userWhatsApp; // Pre-fill with current number
+    }
+
+    // New Function: Update Database
+    async function updateProfile() {
+        const newNum = document.getElementById('editWaNumber').value;
+        if (!newNum || newNum === userWhatsApp) { toggleEditProfile(); return; }
+        
+        const { error } = await supabaseClient
+            .from('user_profiles')
+            .update({ whatsapp_number: newNum })
+            .eq('user_email', currentUserEmail);
+            
+        if (error) {
+            alert("Error updating profile: " + error.message);
+        } else {
+            alert("Delivery number updated successfully!");
+            toggleEditProfile();
+            fetchProfile(); // Refresh UI with new number
+        }
     }
 
     async function fetchLiveProducts() {
