@@ -13,7 +13,6 @@
         .container { max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .header-text { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; position: relative; }
         
-        /* New Edit Profile CSS */
         .edit-btn { background: none; border: none; color: #1976d2; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0; text-decoration: underline; margin-top: 5px; display: inline-block; }
         .edit-form { display: none; background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #bbdefb; }
         
@@ -33,12 +32,10 @@
         .card-ad { border-color: #9c27b0; }
         .buy-btn { color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
         
-        /* Direct Contact Section */
         .contact-box { background: #e8f5e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9; text-align: center; margin-bottom: 30px; }
         .wa-contact-btn { background-color: #25D366; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .wa-btn-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         
-        /* History CSS */
         .history-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
         .ticket-card { background: #fff; padding: 15px; margin-bottom: 15px; border-left: 4px solid #4CAF50; border-radius: 6px; border: 1px solid #e0e0e0; }
         .ticket-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; font-size: 12px; color: #666; font-weight: bold; }
@@ -48,6 +45,11 @@
         .status-reviewed { background-color: #cce5ff; color: #004085; }
         .status-resolved { background-color: #d4edda; color: #155724; }
         .admin-reply-box { background-color: #f1f8e9; padding: 12px; margin-top: 12px; border-radius: 5px; font-size: 13.5px; color: #2e7d32; border: 1px solid #c5e1a5; }
+
+        /* The Checkout Modal CSS */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .momo-box { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #ffeeba; }
     </style>
 </head>
 <body>
@@ -57,11 +59,28 @@
     <button class="logout-btn" onclick="logOut()">Sign Out</button>
 </div>
 
+<div class="modal-overlay" id="checkoutModal">
+    <div class="modal-content">
+        <h2 style="margin-top: 0; color: #0d47a1;">Secure Checkout</h2>
+        <p id="checkoutItemDetails" style="font-size: 16px; font-weight: bold; margin-bottom: 5px;"></p>
+        
+        <div class="momo-box">
+            <p style="margin: 0 0 5px 0; color: #856404; font-size: 14px;">Please send Mobile Money to:</p>
+            <h2 style="margin: 0; color: #222; font-size: 28px; letter-spacing: 2px;">0599931348</h2>
+            <p style="margin: 5px 0 0 0; font-size: 13px; color: #666; font-weight: bold;">Name: Data Hub Admin</p>
+        </div>
+
+        <p style="font-size: 12px; color: #d32f2f; margin-bottom: 20px; font-weight: bold;">⚠️ Do not click confirm until you have actually sent the MoMo!</p>
+        
+        <button class="submit-btn" id="confirmPayBtn">I Have Sent The Money</button>
+        <button class="edit-btn" style="color: #666; margin-top: 15px;" onclick="closeCheckout()">Cancel Order</button>
+    </div>
+</div>
+
 <div class="container">
     <div class="header-text">
         <h2>User Dashboard</h2>
         <p id="userEmailDisplay" style="color: #666; font-size: 14px; margin-bottom: 5px;">Verifying account...</p>
-        
         <button id="showEditBtn" class="edit-btn" style="display: none;" onclick="toggleEditProfile()">⚙️ Edit WhatsApp Number</button>
         
         <div id="accountSettings" class="edit-form">
@@ -82,7 +101,6 @@
     </div>
 
     <div id="storefrontSection" style="display: none;">
-        
         <div class="contact-box">
             <h4 style="margin: 0; color: #2e7d32;">Need Help or Want to Donate?</h4>
             <p style="font-size: 13px; color: #555; margin: 5px 0 10px 0;">Chat directly with the CEO on WhatsApp.</p>
@@ -124,6 +142,8 @@
 
     let currentUserEmail = "";
     let userWhatsApp = "";
+    let pendingOrderName = "";
+    let pendingOrderPrice = "";
 
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -142,11 +162,8 @@
             userWhatsApp = data[0].whatsapp_number;
             document.getElementById('profileSection').style.display = 'none';
             document.getElementById('storefrontSection').style.display = 'block';
-            
-            // Unhide the edit button and update the display text
             document.getElementById('showEditBtn').style.display = 'inline-block';
             document.getElementById('userEmailDisplay').innerHTML = `Logged in as: <strong>${currentUserEmail}</strong><br>Delivery Number: <span style="color: #2e7d32; font-weight: bold;">${userWhatsApp}</span>`;
-            
             fetchLiveProducts(); 
         } else {
             document.getElementById('profileSection').style.display = 'block';
@@ -162,30 +179,17 @@
         if (!error) fetchProfile();
     }
 
-    // New Function: Toggle Edit Menu
     function toggleEditProfile() {
         const div = document.getElementById('accountSettings');
         div.style.display = div.style.display === 'none' ? 'block' : 'none';
-        document.getElementById('editWaNumber').value = userWhatsApp; // Pre-fill with current number
+        document.getElementById('editWaNumber').value = userWhatsApp;
     }
 
-    // New Function: Update Database
     async function updateProfile() {
         const newNum = document.getElementById('editWaNumber').value;
         if (!newNum || newNum === userWhatsApp) { toggleEditProfile(); return; }
-        
-        const { error } = await supabaseClient
-            .from('user_profiles')
-            .update({ whatsapp_number: newNum })
-            .eq('user_email', currentUserEmail);
-            
-        if (error) {
-            alert("Error updating profile: " + error.message);
-        } else {
-            alert("Delivery number updated successfully!");
-            toggleEditProfile();
-            fetchProfile(); // Refresh UI with new number
-        }
+        const { error } = await supabaseClient.from('user_profiles').update({ whatsapp_number: newNum }).eq('user_email', currentUserEmail);
+        if (error) { alert("Error updating profile."); } else { alert("Delivery number updated!"); toggleEditProfile(); fetchProfile(); }
     }
 
     async function fetchLiveProducts() {
@@ -205,7 +209,8 @@
 
             let btnHtml = '';
             if (prod.status === 'Available') {
-                btnHtml = `<button class="buy-btn" style="background: #4CAF50;" onclick="buyBundle('${prod.name}', '${prod.price}')">Buy Now</button>`;
+                // CHANGED: This now opens the checkout modal instead of buying instantly
+                btnHtml = `<button class="buy-btn" style="background: #4CAF50;" onclick="openCheckout('${prod.name}', '${prod.price}')">Buy Now</button>`;
             } else if (prod.status === 'Coming Soon') {
                 btnHtml = `<button class="buy-btn" style="background: #ff9800; cursor: not-allowed;" disabled>Coming Soon</button>`;
             } else {
@@ -226,10 +231,50 @@
         storeDiv.innerHTML = html;
     }
 
-    async function buyBundle(productName, price) {
-        const details = `AUTOMATED ORDER: I want to buy [${productName}] for [${price}]. My WhatsApp is ${userWhatsApp}.`;
-        const { error } = await supabaseClient.from('support_tickets').insert([{ user_email: currentUserEmail, issue_type: 'Purchase Request', issue_details: details, status: 'Pending' }]);
-        if (!error) { alert("Order placed!"); fetchMyTickets(); }
+    // NEW CHECKOUT LOGIC
+    function openCheckout(name, price) {
+        pendingOrderName = name;
+        pendingOrderPrice = price;
+        document.getElementById('checkoutItemDetails').innerText = `${name} - ${price}`;
+        document.getElementById('checkoutModal').style.display = 'flex';
+        
+        // Setup the confirm button for this specific item
+        document.getElementById('confirmPayBtn').onclick = function() {
+            submitPaidOrder();
+        };
+    }
+
+    function closeCheckout() {
+        document.getElementById('checkoutModal').style.display = 'none';
+        pendingOrderName = "";
+        pendingOrderPrice = "";
+    }
+
+    async function submitPaidOrder() {
+        // Change button to show it is working
+        const btn = document.getElementById('confirmPayBtn');
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        const details = `PAID ORDER CLAIM: I have paid ${pendingOrderPrice} for [${pendingOrderName}] via MoMo. Deliver to WhatsApp: ${userWhatsApp}.`;
+        
+        const { error } = await supabaseClient.from('support_tickets').insert([{ 
+            user_email: currentUserEmail, 
+            issue_type: 'Order Payment Verification', 
+            issue_details: details, 
+            status: 'Pending' 
+        }]);
+        
+        btn.innerText = "I Have Sent The Money";
+        btn.disabled = false;
+        closeCheckout();
+
+        if (!error) { 
+            alert("Order Submitted! Admin will verify the MoMo payment and send your bundle shortly."); 
+            fetchMyTickets(); 
+        } else {
+            alert("Error placing order. Please try again or contact support.");
+        }
     }
 
     async function fetchMyTickets() {
@@ -248,7 +293,7 @@
             let replyHtml = '';
             if (ticket.admin_reply) replyHtml = `<div class="admin-reply-box"><strong>Admin:</strong> ${ticket.admin_reply}</div>`;
 
-            html += `<div class="ticket-card"><div class="ticket-header"><span>${date} - ${ticket.issue_type}</span><span class="status-badge ${statusClass}">${status}</span></div><p class="ticket-text">${ticket.issue_details}</p>${replyHtml}</div>`;
+            html += `<div class="ticket-card"><div class="ticket-header"><span>${date} - <strong style="color:#0d47a1;">${ticket.issue_type}</strong></span><span class="status-badge ${statusClass}">${status}</span></div><p class="ticket-text">${ticket.issue_details}</p>${replyHtml}</div>`;
         });
         historyDiv.innerHTML = html;
     }
