@@ -17,15 +17,20 @@
         .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 12px; font-size: 14px; }
         .ticket-text { margin: 10px 0; font-size: 15px; color: #222; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
         .admin-controls { display: flex; gap: 10px; margin-top: 15px; align-items: center; flex-wrap: wrap; width: 100%; }
-        select, input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; }
+        select, input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; box-sizing: border-box; }
         input[type="text"] { flex-grow: 1; min-width: 200px; }
         .update-btn { background-color: #1976d2; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .update-btn:hover { background-color: #115293; }
-        .add-btn { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; font-size: 16px;}
+        .add-btn { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; font-size: 16px;}
         .delete-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .wa-btn { background-color: #25D366; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+        
+        /* New Image Upload UI */
+        .image-upload-box { background: #fff; padding: 10px; border: 1px dashed #ff9800; border-radius: 4px; text-align: center; grid-column: span 2; }
+        .image-upload-box label { font-size: 13px; font-weight: bold; color: #e65100; display: block; margin-bottom: 5px; }
+        
+        @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .image-upload-box { grid-column: span 1; } }
     </style>
 </head>
 <body>
@@ -38,7 +43,7 @@
 <div class="container" style="border-top: 5px solid #ff9800;">
     <div class="header-text">
         <h2 style="color: #e65100; margin-top: 0;">📦 Storefront Inventory</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 0;">Add new bundles, ECG services, or affiliate links to your live website.</p>
+        <p style="color: #666; font-size: 14px; margin-bottom: 0;">Add new bundles, ECG services, or physical products with images.</p>
     </div>
 
     <div style="background: #fff8e1; padding: 20px; border-radius: 8px; border: 1px solid #ffecb3; margin-bottom: 30px;">
@@ -52,10 +57,15 @@
                 <option value="telecel">Telecel</option>
                 <option value="airteltigo">AirtelTigo</option>
                 <option value="ecg">ECG Bill</option>
-                <option value="ad">Affiliate/Ad</option>
+                <option value="ad">Physical Product / Ad</option>
             </select>
+            
+            <div class="image-upload-box">
+                <label>📸 Product Image (Optional - Leave blank for Data Bundles)</label>
+                <input type="file" id="newProdImage" accept="image/*" style="width: 100%;">
+            </div>
         </div>
-        <button class="add-btn" onclick="addProduct()">Publish to Storefront</button>
+        <button class="add-btn" id="uploadBtn" onclick="addProduct()">Publish to Storefront</button>
     </div>
 
     <h3 style="color: #333;">Live Products</h3>
@@ -78,6 +88,7 @@
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     
+    // Your exact CEO email is locked in!
     const ADMIN_EMAIL = "ghanacyber2@gmail.com"; 
 
     async function checkSecurity() {
@@ -100,11 +111,17 @@
 
         let html = '';
         data.forEach(prod => {
+            // Show a tiny preview of the image if it exists
+            let imgPreview = prod.image_url ? `<img src="${prod.image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">` : `<div style="width: 50px; height: 50px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">No Img</div>`;
+
             html += `
                 <div class="product-card">
-                    <div style="flex-grow: 1;">
-                        <strong>${prod.name}</strong> - <span style="color: #2e7d32; font-weight: bold;">${prod.price}</span><br>
-                        <span style="font-size: 12px; color: #666; text-transform: uppercase;">Category: ${prod.category}</span>
+                    <div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">
+                        ${imgPreview}
+                        <div>
+                            <strong>${prod.name}</strong> - <span style="color: #2e7d32; font-weight: bold;">${prod.price}</span><br>
+                            <span style="font-size: 12px; color: #666; text-transform: uppercase;">Category: ${prod.category}</span>
+                        </div>
                     </div>
                     <div class="admin-controls" style="width: auto; margin-top: 0;">
                         <select id="prod-status-${prod.id}">
@@ -126,19 +143,59 @@
         const price = document.getElementById('newProdPrice').value;
         const desc = document.getElementById('newProdDesc').value;
         const cat = document.getElementById('newProdCat').value;
+        const imageFile = document.getElementById('newProdImage').files[0];
 
         if(!name || !price) { alert("Name and Price are required!"); return; }
 
+        const btn = document.getElementById('uploadBtn');
+        btn.innerText = "Uploading to Cloud...";
+        btn.disabled = true;
+
+        let finalImageUrl = ""; // Starts blank
+
+        // IF THE BOSS UPLOADED AN IMAGE, PROCESS IT
+        if (imageFile) {
+            const fileExt = imageFile.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            
+            const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                .from('product-images')
+                .upload(fileName, imageFile);
+
+            if (uploadError) {
+                alert("Image upload failed: " + uploadError.message);
+                btn.innerText = "Publish to Storefront";
+                btn.disabled = false;
+                return;
+            }
+
+            // Get the public link to the picture
+            const { data } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
+            finalImageUrl = data.publicUrl;
+        }
+
+        // SAVE PRODUCT TO DATABASE
         const { error } = await supabaseClient.from('products').insert([{ 
-            name: name, price: price, description: desc, category: cat, status: 'Available' 
+            name: name, 
+            price: price, 
+            description: desc, 
+            category: cat, 
+            status: 'Available',
+            image_url: finalImageUrl 
         }]);
 
-        if (error) alert("Error adding product: " + error.message);
-        else {
+        btn.innerText = "Publish to Storefront";
+        btn.disabled = false;
+
+        if (error) {
+            alert("Error adding product: " + error.message);
+        } else {
             document.getElementById('newProdName').value = '';
             document.getElementById('newProdPrice').value = '';
             document.getElementById('newProdDesc').value = '';
+            document.getElementById('newProdImage').value = '';
             fetchProducts();
+            alert("Product successfully pushed to Storefront!");
         }
     }
 
