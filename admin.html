@@ -77,11 +77,14 @@
     const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-    const ADMIN_EMAIL = "admin@datahub.com"; 
+    
+    // REPLACE THE EMAIL BELOW WITH YOUR REAL EMAIL!
+    const ADMIN_EMAIL = "YOUR_REAL_EMAIL@GMAIL.COM"; 
 
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session || session.user.email !== ADMIN_EMAIL) {
+            alert("SECURITY ALERT: You do not have Boss clearance.");
             window.location.replace('index.html');
             return;
         }
@@ -89,7 +92,6 @@
         fetchAllTickets();
     }
 
-    // --- INVENTORY LOGIC ---
     async function fetchProducts() {
         const container = document.getElementById('allProductsContainer');
         const { data, error } = await supabaseClient.from('products').select('*').order('id', { ascending: false });
@@ -154,7 +156,6 @@
         }
     }
 
-    // --- TICKET LOGIC (unchanged) ---
     async function fetchAllTickets() {
         const container = document.getElementById('allTicketsContainer');
         const { data: tickets, error: tError } = await supabaseClient.from('support_tickets').select('*').order('created_at', { ascending: false });
