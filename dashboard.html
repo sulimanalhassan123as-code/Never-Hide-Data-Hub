@@ -13,7 +13,7 @@
         .container { max-width: 600px; margin: 40px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .header-text { margin-bottom: 25px; border-bottom: 2px solid #eee; padding-bottom: 15px; position: relative; }
         
-        .edit-btn { background: none; border: none; color: #1976d2; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0; text-decoration: underline; margin-top: 5px; display: inline-block; }
+        .edit-btn { background: none; border: none; color: #1976d2; cursor: pointer; font-size: 13px; font-weight: bold; padding: 0; text-decoration: underline; margin-top: 5px; display: inline-block; margin-right: 15px; }
         .edit-form { display: none; background: #e3f2fd; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #bbdefb; }
         
         .form-group { margin-bottom: 20px; }
@@ -79,7 +79,11 @@
     <div class="header-text">
         <h2>User Dashboard</h2>
         <p id="userEmailDisplay" style="color: #666; font-size: 14px; margin-bottom: 5px;">Verifying account...</p>
-        <button id="showEditBtn" class="edit-btn" style="display: none;" onclick="toggleEditProfile()">⚙️ Edit WhatsApp Number</button>
+        
+        <div id="actionButtonsRow" style="display: none;">
+            <button class="edit-btn" onclick="toggleEditProfile()">⚙️ Edit WhatsApp Number</button>
+            <button class="edit-btn" onclick="togglePasswordUpdate()" style="color: #d32f2f;">🔐 Change Password</button>
+        </div>
         
         <div id="accountSettings" class="edit-form">
             <h4 style="margin: 0 0 10px 0; color: #0d47a1;">Update Delivery Number</h4>
@@ -88,6 +92,16 @@
                 <button class="submit-btn" style="width: auto; padding: 10px 20px; background-color: #1976d2;" onclick="updateProfile()">Save</button>
             </div>
             <button class="edit-btn" style="color: #d32f2f; margin-top: 10px;" onclick="toggleEditProfile()">Cancel</button>
+        </div>
+
+        <div id="passwordSettings" class="edit-form" style="background: #fce4ec; border-color: #f8bbd0;">
+            <h4 style="margin: 0 0 10px 0; color: #c2185b;">Set New Password</h4>
+            <div style="display: flex; gap: 10px;">
+                <input type="password" id="newPasswordInput" placeholder="Enter new password..." style="flex-grow: 1;">
+                <button class="submit-btn" style="width: auto; padding: 10px 20px; background-color: #c2185b;" onclick="updatePassword()">Update</button>
+            </div>
+            <p id="pwdMessage" style="font-size: 12px; color: #c2185b; margin: 5px 0 0 0;"></p>
+            <button class="edit-btn" style="color: #666; margin-top: 10px;" onclick="togglePasswordUpdate()">Cancel</button>
         </div>
     </div>
 
@@ -160,13 +174,13 @@
             userWhatsApp = data[0].whatsapp_number;
             document.getElementById('profileSection').style.display = 'none';
             document.getElementById('storefrontSection').style.display = 'block';
-            document.getElementById('showEditBtn').style.display = 'inline-block';
+            document.getElementById('actionButtonsRow').style.display = 'block';
             document.getElementById('userEmailDisplay').innerHTML = `Logged in as: <strong>${currentUserEmail}</strong><br>Delivery Number: <span style="color: #2e7d32; font-weight: bold;">${userWhatsApp}</span>`;
             fetchLiveProducts(); 
         } else {
             document.getElementById('profileSection').style.display = 'block';
             document.getElementById('storefrontSection').style.display = 'none';
-            document.getElementById('showEditBtn').style.display = 'none';
+            document.getElementById('actionButtonsRow').style.display = 'none';
         }
     }
 
@@ -178,9 +192,18 @@
     }
 
     function toggleEditProfile() {
+        document.getElementById('passwordSettings').style.display = 'none';
         const div = document.getElementById('accountSettings');
         div.style.display = div.style.display === 'none' ? 'block' : 'none';
         document.getElementById('editWaNumber').value = userWhatsApp;
+    }
+
+    function togglePasswordUpdate() {
+        document.getElementById('accountSettings').style.display = 'none';
+        const div = document.getElementById('passwordSettings');
+        div.style.display = div.style.display === 'none' ? 'block' : 'none';
+        document.getElementById('pwdMessage').innerText = "";
+        document.getElementById('newPasswordInput').value = "";
     }
 
     async function updateProfile() {
@@ -188,6 +211,21 @@
         if (!newNum || newNum === userWhatsApp) { toggleEditProfile(); return; }
         const { error } = await supabaseClient.from('user_profiles').update({ whatsapp_number: newNum }).eq('user_email', currentUserEmail);
         if (error) { alert("Error updating profile."); } else { alert("Delivery number updated!"); toggleEditProfile(); fetchProfile(); }
+    }
+
+    async function updatePassword() {
+        const newPwd = document.getElementById('newPasswordInput').value;
+        const msg = document.getElementById('pwdMessage');
+        if (!newPwd || newPwd.length < 6) { msg.innerText = "Password must be at least 6 characters."; return; }
+        
+        msg.innerText = "Updating...";
+        const { error } = await supabaseClient.auth.updateUser({ password: newPwd });
+        
+        if (error) { msg.innerText = error.message; } 
+        else { 
+            alert("Password updated securely!"); 
+            togglePasswordUpdate(); 
+        }
     }
 
     async function fetchLiveProducts() {
