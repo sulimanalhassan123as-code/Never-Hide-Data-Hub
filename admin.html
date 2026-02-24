@@ -78,8 +78,7 @@
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     
-    // REPLACE THE EMAIL BELOW WITH YOUR REAL EMAIL!
-    const ADMIN_EMAIL = "YOUR_REAL_EMAIL@GMAIL.COM"; 
+    const ADMIN_EMAIL = "ghanacyber2@gmail.com"; 
 
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
