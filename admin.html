@@ -26,7 +26,6 @@
         .wa-btn { background-color: #25D366; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         
-        /* New Image Upload UI */
         .image-upload-box { background: #fff; padding: 10px; border: 1px dashed #ff9800; border-radius: 4px; text-align: center; grid-column: span 2; }
         .image-upload-box label { font-size: 13px; font-weight: bold; color: #e65100; display: block; margin-bottom: 5px; }
         
@@ -88,7 +87,7 @@
     const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     
-    // Your exact CEO email is locked in!
+    // Kept your official CEO email!
     const ADMIN_EMAIL = "ghanacyber2@gmail.com"; 
 
     async function checkSecurity() {
@@ -111,7 +110,6 @@
 
         let html = '';
         data.forEach(prod => {
-            // Show a tiny preview of the image if it exists
             let imgPreview = prod.image_url ? `<img src="${prod.image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">` : `<div style="width: 50px; height: 50px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">No Img</div>`;
 
             html += `
@@ -151,9 +149,8 @@
         btn.innerText = "Uploading to Cloud...";
         btn.disabled = true;
 
-        let finalImageUrl = ""; // Starts blank
+        let finalImageUrl = "";
 
-        // IF THE BOSS UPLOADED AN IMAGE, PROCESS IT
         if (imageFile) {
             const fileExt = imageFile.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
@@ -169,19 +166,12 @@
                 return;
             }
 
-            // Get the public link to the picture
             const { data } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
             finalImageUrl = data.publicUrl;
         }
 
-        // SAVE PRODUCT TO DATABASE
         const { error } = await supabaseClient.from('products').insert([{ 
-            name: name, 
-            price: price, 
-            description: desc, 
-            category: cat, 
-            status: 'Available',
-            image_url: finalImageUrl 
+            name: name, price: price, description: desc, category: cat, status: 'Available', image_url: finalImageUrl 
         }]);
 
         btn.innerText = "Publish to Storefront";
@@ -195,20 +185,28 @@
             document.getElementById('newProdDesc').value = '';
             document.getElementById('newProdImage').value = '';
             fetchProducts();
-            alert("Product successfully pushed to Storefront!");
         }
     }
 
+    // FIX 1: Forcing ID to act like a real number
     async function updateProdStatus(id) {
+        const targetId = parseInt(id);
         const newStatus = document.getElementById(`prod-status-${id}`).value;
-        const { error } = await supabaseClient.from('products').update({ status: newStatus }).eq('id', id);
+        const { error } = await supabaseClient.from('products').update({ status: newStatus }).eq('id', targetId);
         if (error) alert("Error: " + error.message); else { alert("Status updated!"); fetchProducts(); }
     }
 
+    // FIX 2: Forcing ID to act like a real number
     async function deleteProduct(id) {
         if(confirm("Are you sure you want to delete this product forever?")) {
-            const { error } = await supabaseClient.from('products').delete().eq('id', id);
-            if (error) alert("Error: " + error.message); else fetchProducts();
+            const targetId = parseInt(id);
+            const { error } = await supabaseClient.from('products').delete().eq('id', targetId);
+            
+            if (error) {
+                alert("Error deleting: " + error.message); 
+            } else { 
+                fetchProducts(); 
+            }
         }
     }
 
@@ -261,9 +259,10 @@
     }
 
     async function updateTicket(ticketId) {
+        const targetId = parseInt(ticketId);
         const newStatus = document.getElementById(`status-${ticketId}`).value;
         const newReply = document.getElementById(`reply-${ticketId}`).value;
-        const { error } = await supabaseClient.from('support_tickets').update({ status: newStatus, admin_reply: newReply }).eq('id', ticketId);
+        const { error } = await supabaseClient.from('support_tickets').update({ status: newStatus, admin_reply: newReply }).eq('id', targetId);
         if (error) alert("Error: " + error.message); else { alert("Updated successfully!"); fetchAllTickets(); }
     }
 
