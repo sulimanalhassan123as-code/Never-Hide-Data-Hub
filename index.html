@@ -10,11 +10,10 @@
         .navbar { background-color: #0d47a1; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .container { max-width: 800px; margin: 20px auto; padding: 20px; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        input, select, button, textarea { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
         button { background-color: #ff9800; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
         button:hover { opacity: 0.9; }
         
-        /* THE NEW DIGITAL WALLET DESIGN */
         .wallet-card { background: linear-gradient(135deg, #2e7d32, #1b5e20); color: white; padding: 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; box-shadow: 0 6px 12px rgba(46,125,50,0.3); flex-wrap: wrap; gap: 15px; }
         .wallet-card h3 { margin: 0; font-size: 14px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
         .wallet-card h1 { margin: 5px 0 0 0; font-size: 36px; }
@@ -45,7 +44,6 @@
 </div>
 
 <div class="container" id="storeSection" style="display: none;">
-    
     <div class="wallet-card">
         <div>
             <h3>My Digital Wallet</h3>
@@ -70,7 +68,7 @@
             <option value="Order Issue">Order Issue</option>
             <option value="General Question">General Question</option>
         </select>
-        <textarea id="ticketDetails" rows="4" placeholder="Enter MoMo Transaction ID or your issue details here..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 10px; font-family: inherit;"></textarea>
+        <textarea id="ticketDetails" rows="4" placeholder="Enter MoMo Transaction ID or your issue details here..." style="font-family: inherit;"></textarea>
         <button onclick="submitTicket()" style="background-color: #ff9800; margin-top: 15px;">Send Message to Boss</button>
     </div>
 </div>
@@ -85,18 +83,11 @@
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
             currentUser = session.user;
-            
-            // REDIRECT BOSS TO ADMIN DASHBOARD IMMEDIATELY
-            if(currentUser.email === "ghanacyber2@gmail.com") {
-                window.location.replace('admin.html');
-                return;
-            }
-
+            if(currentUser.email === "ghanacyber2@gmail.com") { window.location.replace('admin.html'); return; }
             document.getElementById('authSection').style.display = 'none';
             document.getElementById('storeSection').style.display = 'block';
             document.getElementById('logoutBtn').style.display = 'block';
             document.getElementById('userEmailDisplay').innerText = currentUser.email;
-            
             fetchMyWallet();
             fetchProducts();
         } else {
@@ -107,41 +98,24 @@
     }
 
     async function signUp() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const email = document.getElementById('email').value; const password = document.getElementById('password').value;
         if(!email || !password) { alert("Enter email and password!"); return; }
         const { data, error } = await supabaseClient.auth.signUp({ email, password });
         if(error) alert(error.message); else { alert("Account created! Logging in..."); checkAuth(); }
     }
 
     async function signIn() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
+        const email = document.getElementById('email').value; const password = document.getElementById('password').value;
         if(!email || !password) { alert("Enter email and password!"); return; }
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
         if(error) alert(error.message); else checkAuth();
     }
 
-    async function logOut() {
-        await supabaseClient.auth.signOut();
-        currentUser = null;
-        checkAuth();
-    }
+    async function logOut() { await supabaseClient.auth.signOut(); currentUser = null; checkAuth(); }
 
-    // THE ENGINE THAT FETCHES THE CUSTOMER'S MONEY
     async function fetchMyWallet() {
-        const { data, error } = await supabaseClient
-            .from('user_profiles')
-            .select('wallet_balance')
-            .eq('user_email', currentUser.email)
-            .single();
-            
-        let balance = 0;
-        if (data && data.wallet_balance !== null) {
-            balance = data.wallet_balance;
-        }
-        
-        // Display it nicely with 2 decimal places (e.g. 20.00 GHS)
+        const { data, error } = await supabaseClient.from('user_profiles').select('wallet_balance').eq('user_email', currentUser.email).single();
+        let balance = 0; if (data && data.wallet_balance !== null) { balance = data.wallet_balance; }
         document.getElementById('walletBalanceDisplay').innerText = parseFloat(balance).toFixed(2) + " GHS";
     }
 
@@ -155,49 +129,78 @@
     async function fetchProducts() {
         const container = document.getElementById('storeProducts');
         const { data, error } = await supabaseClient.from('products').select('*').eq('status', 'Available').order('id', { ascending: false });
-        
         if (error || !data) { container.innerHTML = '<p style="color: red;">Error loading products.</p>'; return; }
         if (data.length === 0) { container.innerHTML = '<p style="color: #888;">No products currently available.</p>'; return; }
 
         let html = '';
         data.forEach(prod => {
             let imgHtml = prod.image_url ? `<img src="${prod.image_url}" alt="${prod.name}">` : `<div style="height: 140px; background: #eee; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999;">No Image</div>`;
+            // WE UPGRADED THE BUTTON TO CALL buyProduct()
             html += `
                 <div class="product-item">
                     ${imgHtml}
                     <h3 style="margin: 0 0 5px 0; color: #333; font-size: 16px;">${prod.name}</h3>
                     <p style="color: #2e7d32; font-weight: bold; font-size: 20px; margin: 5px 0;">${prod.price}</p>
                     <p style="font-size: 12px; color: #666; margin: 5px 0;">${prod.description || ''}</p>
-                    <button class="buy-btn" onclick="alert('Digital Wallet purchasing feature is being installed right now! Check back soon.')">Buy with Wallet</button>
+                    <button class="buy-btn" onclick="buyProduct('${prod.id}', '${prod.name}', '${prod.price}')">Buy with Wallet</button>
                 </div>
             `;
         });
         container.innerHTML = html;
     }
 
+    // --- THE NEW CHECKOUT ENGINE ---
+    async function buyProduct(prodId, prodName, rawPrice) {
+        // 1. Strip out letters from the price (e.g. "4 GHS" becomes 4.00)
+        const priceNumber = parseFloat(rawPrice.replace(/[^0-9.]/g, ''));
+        if(isNaN(priceNumber)) { alert("System Error: Product price is formatted incorrectly. Contact Admin."); return; }
+
+        // 2. Check the customer's wallet balance
+        const { data: profile, error: pError } = await supabaseClient.from('user_profiles').select('wallet_balance').eq('user_email', currentUser.email).single();
+        if (pError || !profile) { alert("Error reading wallet."); return; }
+        
+        const currentBalance = profile.wallet_balance || 0;
+
+        // 3. Stop them if they don't have enough money
+        if (currentBalance < priceNumber) {
+            alert(`Insufficient funds! This costs ${priceNumber} GHS, but you only have ${currentBalance.toFixed(2)} GHS. Please top up your wallet.`);
+            return;
+        }
+
+        // 4. Confirm purchase
+        if(!confirm(`Are you sure you want to buy ${prodName} for ${priceNumber} GHS?`)) return;
+
+        // 5. Deduct the money from the database
+        const newBalance = currentBalance - priceNumber;
+        const { error: updateError } = await supabaseClient.from('user_profiles').update({ wallet_balance: newBalance }).eq('user_email', currentUser.email);
+        
+        if (updateError) { alert("Transaction failed: " + updateError.message); return; }
+
+        // 6. Send a NEW ORDER ticket directly to the Boss Dashboard
+        const { error: ticketError } = await supabaseClient.from('support_tickets').insert([{
+            user_email: currentUser.email,
+            issue_type: '🚨 NEW ORDER',
+            issue_details: `Customer just bought: ${prodName} \nAmount Deducted: ${priceNumber} GHS \nPlease deliver this order immediately!`,
+            status: 'Pending'
+        }]);
+
+        // 7. Celebrate and refresh the wallet display
+        alert(`✅ Success! You bought ${prodName}. The Admin has been notified and will deliver it to you shortly!`);
+        fetchMyWallet(); 
+    }
+
     async function submitTicket() {
         const type = document.getElementById('ticketType').value;
         const details = document.getElementById('ticketDetails').value;
         if(!details) { alert("Please enter the transaction ID or details!"); return; }
-        
-        const btn = event.target;
-        btn.innerText = "Sending..."; btn.disabled = true;
+        const btn = event.target; btn.innerText = "Sending..."; btn.disabled = true;
 
         const { error } = await supabaseClient.from('support_tickets').insert([{
-            user_email: currentUser.email,
-            issue_type: type,
-            issue_details: details,
-            status: 'Pending'
+            user_email: currentUser.email, issue_type: type, issue_details: details, status: 'Pending'
         }]);
 
         btn.innerText = "Send Message to Boss"; btn.disabled = false;
-
-        if (error) {
-            alert("Error: " + error.message);
-        } else { 
-            alert("Message sent successfully! The Boss will update your wallet shortly."); 
-            document.getElementById('ticketDetails').value = ''; 
-        }
+        if (error) { alert("Error: " + error.message); } else { alert("Message sent successfully!"); document.getElementById('ticketDetails').value = ''; }
     }
 
     checkAuth();
