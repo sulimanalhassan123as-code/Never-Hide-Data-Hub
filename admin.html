@@ -12,14 +12,17 @@
         .logout-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .container { max-width: 800px; margin: 30px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .header-text { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
-        .ticket-card { background: #fff; padding: 15px; margin-bottom: 20px; border-left: 5px solid #0d47a1; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; }
+        .ticket-card, .wallet-card { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; }
+        .ticket-card { border-left: 5px solid #0d47a1; }
+        .wallet-card { border-left: 5px solid #2e7d32; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;}
         .product-card { background: #fff; padding: 15px; margin-bottom: 15px; border-left: 5px solid #ff9800; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .admin-controls { display: flex; gap: 8px; margin-top: 15px; align-items: center; flex-wrap: wrap; width: 100%; }
-        select, input[type="text"], input[type="url"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; box-sizing: border-box; }
+        select, input[type="text"], input[type="number"], input[type="url"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; box-sizing: border-box; }
         input[type="text"], input[type="url"] { flex-grow: 1; min-width: 200px; }
         .update-btn { background-color: #1976d2; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .edit-btn { background-color: #0288d1; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .add-btn { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; font-size: 16px; transition: 0.3s; }
+        .wallet-btn { background-color: #2e7d32; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .delete-btn { background-color: #d32f2f; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         
@@ -60,20 +63,15 @@
             
             <div class="image-upload-box">
                 <p style="margin-top: 0; font-weight: bold; color: #e65100; margin-bottom: 10px;">Product Image (Optional)</p>
-                
                 <div style="display: flex; justify-content: center; flex-wrap: wrap;">
                     <label for="cameraInput" class="custom-file-btn" style="background-color: #d32f2f;">📸 Take Photo</label>
                     <label for="galleryInput" class="custom-file-btn" style="background-color: #1976d2;">🖼️ Pick from Photos</label>
                 </div>
-
                 <input type="file" id="cameraInput" accept="image/*" capture="environment">
                 <input type="file" id="galleryInput" accept="image/jpeg, image/png, image/webp">
                 <p id="fileNameDisplay" style="font-size: 13px; color: #666; margin: 10px 0 0 0;">No file selected</p>
-
                 <div class="url-divider">--- OR ---</div>
-                
                 <input type="url" id="newProdImageUrl" placeholder="Paste Image Link (https://...)" style="width: 100%; max-width: 400px; text-align: center;">
-                
                 <img id="preview" style="display: none; width: 200px; margin: 15px auto 0 auto; border-radius: 8px; border: 2px solid #ccc;">
             </div>
         </div>
@@ -82,8 +80,16 @@
     </div>
 
     <h3 style="color: #333;">Live Products</h3>
-    <div id="allProductsContainer">
-        <p style="color: #888; font-style: italic;">Loading inventory...</p>
+    <div id="allProductsContainer"><p style="color: #888; font-style: italic;">Loading inventory...</p></div>
+</div>
+
+<div class="container" style="border-top: 5px solid #2e7d32;">
+    <div class="header-text">
+        <h2 style="color: #2e7d32; margin-top: 0;">💰 Customer Wallets</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 0;">Manage balances when customers send MoMo.</p>
+    </div>
+    <div id="allWalletsContainer">
+        <p style="color: #888; font-style: italic;">Loading user accounts...</p>
     </div>
 </div>
 
@@ -91,9 +97,7 @@
     <div class="header-text">
         <h2>🛠️ Master Support & Order Queue</h2>
     </div>
-    <div id="allTicketsContainer">
-        <p style="color: #888; font-style: italic;">Loading master database...</p>
-    </div>
+    <div id="allTicketsContainer"><p style="color: #888; font-style: italic;">Loading master database...</p></div>
 </div>
 
 <script>
@@ -102,6 +106,7 @@
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     const ADMIN_EMAIL = "ghanacyber2@gmail.com"; 
 
+    // ALL PREVIOUS IMAGE AND PRODUCT LOGIC STAYS THE SAME
     let liveProductsArray = [];
     let editingProductId = null;
     let selectedImageFile = null;
@@ -110,37 +115,27 @@
     const previewImg = document.getElementById("preview");
     const urlInput = document.getElementById("newProdImageUrl");
 
-    // Handle File Pickers
     function handleImageSelection(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         selectedImageFile = file; 
-        urlInput.value = ""; // Clear the URL box if they pick a file
+        urlInput.value = ""; 
         display.innerHTML = `<strong style="color: #2e7d32;">✅ File Selected: ${file.name}</strong>`;
-
         const reader = new FileReader();
-        reader.onload = function(e) {
-            previewImg.src = e.target.result;
-            previewImg.style.display = "block";
-        };
+        reader.onload = function(e) { previewImg.src = e.target.result; previewImg.style.display = "block"; };
         reader.readAsDataURL(file);
     }
 
     document.getElementById("cameraInput").addEventListener("change", handleImageSelection);
     document.getElementById("galleryInput").addEventListener("change", handleImageSelection);
 
-    // Handle URL Paste (Live Preview)
     urlInput.addEventListener("input", function() {
         const url = urlInput.value.trim();
         if (url) {
-            selectedImageFile = null; // Clear any picked file
-            display.innerText = "Using Image Link";
-            previewImg.src = url;
-            previewImg.style.display = "block";
+            selectedImageFile = null; 
+            display.innerText = "Using Image Link"; previewImg.src = url; previewImg.style.display = "block";
         } else {
-            display.innerText = "No file selected";
-            previewImg.style.display = "none";
+            display.innerText = "No file selected"; previewImg.style.display = "none";
         }
     });
 
@@ -149,8 +144,61 @@
         if (!session || session.user.email !== ADMIN_EMAIL) { window.location.replace('index.html'); return; }
         fetchProducts();
         fetchAllTickets();
+        fetchWallets(); // Initialize the new wallet function!
     }
 
+    // --- NEW WALLET ENGINE ---
+    async function fetchWallets() {
+        const container = document.getElementById('allWalletsContainer');
+        // Fetch all users from the user_profiles table
+        const { data: users, error } = await supabaseClient.from('user_profiles').select('*').order('created_at', { ascending: false });
+        
+        if (error || !users) { container.innerHTML = '<p style="color: red;">Error loading wallets.</p>'; return; }
+        if (users.length === 0) { container.innerHTML = '<p style="color: #888;">No users registered yet.</p>'; return; }
+
+        let html = '';
+        users.forEach(user => {
+            // Ensure wallet_balance isn't null. If it is, default to 0.
+            const balance = user.wallet_balance || 0;
+            
+            html += `
+                <div class="wallet-card">
+                    <div>
+                        <strong>Email:</strong> ${user.user_email} <br>
+                        <strong>WhatsApp:</strong> ${user.whatsapp_number || 'N/A'} <br>
+                        <strong style="color: #2e7d32; font-size: 18px;">Balance: ${balance} GHS</strong>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                        <input type="number" id="wallet-add-${user.id}" placeholder="Amount (+ or -)" style="width: 140px;" step="0.01">
+                        <button class="wallet-btn" onclick="updateWalletBalance('${user.id}', ${balance})">Update Funds</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function updateWalletBalance(userId, currentBalance) {
+        const inputField = document.getElementById(`wallet-add-${userId}`);
+        const amountToAdjust = parseFloat(inputField.value);
+        
+        if (isNaN(amountToAdjust)) { alert("Please enter a valid number!"); return; }
+
+        const newBalance = currentBalance + amountToAdjust;
+
+        const { error } = await supabaseClient.from('user_profiles').update({ wallet_balance: newBalance }).eq('id', userId);
+        
+        if (error) { 
+            alert("Error updating wallet: " + error.message); 
+        } else { 
+            alert(`Success! New balance is ${newBalance} GHS`);
+            inputField.value = ''; // clear the box
+            fetchWallets(); // refresh the list
+        }
+    }
+    // -------------------------
+
+    // Product Functions
     async function fetchProducts() {
         const container = document.getElementById('allProductsContainer');
         const { data, error } = await supabaseClient.from('products').select('*').order('id', { ascending: false });
@@ -159,30 +207,9 @@
 
         liveProductsArray = data; 
         let html = '';
-        
         data.forEach(prod => {
             let imgPreview = prod.image_url ? `<img src="${prod.image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">` : `<div style="width: 50px; height: 50px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">No Img</div>`;
-            html += `
-                <div class="product-card" id="product-row-${prod.id}">
-                    <div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">
-                        ${imgPreview}
-                        <div>
-                            <strong>${prod.name}</strong> - <span style="color: #2e7d32; font-weight: bold;">${prod.price}</span><br>
-                            <span style="font-size: 12px; color: #666; text-transform: uppercase;">Category: ${prod.category}</span>
-                        </div>
-                    </div>
-                    <div class="admin-controls" style="width: auto; margin-top: 0;">
-                        <select id="prod-status-${prod.id}">
-                            <option value="Available" ${prod.status === 'Available' ? 'selected' : ''}>🟢 Available</option>
-                            <option value="Coming Soon" ${prod.status === 'Coming Soon' ? 'selected' : ''}>🟡 Coming Soon</option>
-                            <option value="Out of Stock" ${prod.status === 'Out of Stock' ? 'selected' : ''}>🔴 Out of Stock</option>
-                        </select>
-                        <button class="update-btn" onclick="updateProdStatus('${prod.id}')">Set Status</button>
-                        <button class="edit-btn" onclick="loadEditForm('${prod.id}')">✏️ Edit</button>
-                        <button class="delete-btn" onclick="deleteProduct('${prod.id}')">🗑️</button>
-                    </div>
-                </div>
-            `;
+            html += `<div class="product-card" id="product-row-${prod.id}"><div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">${imgPreview}<div><strong>${prod.name}</strong> - <span style="color: #2e7d32; font-weight: bold;">${prod.price}</span><br><span style="font-size: 12px; color: #666; text-transform: uppercase;">Category: ${prod.category}</span></div></div><div class="admin-controls" style="width: auto; margin-top: 0;"><select id="prod-status-${prod.id}"><option value="Available" ${prod.status === 'Available' ? 'selected' : ''}>⚡ Available</option><option value="Coming Soon" ${prod.status === 'Coming Soon' ? 'selected' : ''}>🔜 Coming Soon</option><option value="Out of Stock" ${prod.status === 'Out of Stock' ? 'selected' : ''}>🔌 Out of Stock</option></select><button class="update-btn" onclick="updateProdStatus('${prod.id}')">Set Status</button><button class="edit-btn" onclick="loadEditForm('${prod.id}')">✏️ Edit</button><button class="delete-btn" onclick="deleteProduct('${prod.id}')">🗑️</button></div></div>`;
         });
         container.innerHTML = html;
     }
@@ -193,51 +220,30 @@
         if (!prod) return;
 
         editingProductId = targetId;
-        selectedImageFile = null; // Clear file selection
-        
+        selectedImageFile = null; 
         document.getElementById('newProdName').value = prod.name;
         document.getElementById('newProdPrice').value = prod.price;
         document.getElementById('newProdDesc').value = prod.description || "";
         document.getElementById('newProdCat').value = prod.category;
         
-        // If it already has an image, put it in the URL box and show preview
         if (prod.image_url) {
-            urlInput.value = prod.image_url;
-            previewImg.src = prod.image_url;
-            previewImg.style.display = "block";
-            display.innerText = "Existing Image Loaded";
+            urlInput.value = prod.image_url; previewImg.src = prod.image_url; previewImg.style.display = "block"; display.innerText = "Existing Image Loaded";
         } else {
-            urlInput.value = "";
-            previewImg.style.display = "none";
-            display.innerText = "No file selected";
+            urlInput.value = ""; previewImg.style.display = "none"; display.innerText = "No file selected";
         }
         
         document.getElementById('formTitle').innerText = "✏️ Edit Product Details";
         document.getElementById('formTitle').style.color = "#0288d1";
-        const btn = document.getElementById('uploadBtn');
-        btn.innerText = "💾 Save Changes";
-        btn.style.backgroundColor = "#0288d1";
+        const btn = document.getElementById('uploadBtn'); btn.innerText = "💾 Save Changes"; btn.style.backgroundColor = "#0288d1";
         document.getElementById('cancelEditBtn').style.display = "block";
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function cancelEdit() {
-        editingProductId = null;
-        selectedImageFile = null;
-        document.getElementById('newProdName').value = '';
-        document.getElementById('newProdPrice').value = '';
-        document.getElementById('newProdDesc').value = '';
-        document.getElementById('cameraInput').value = '';
-        document.getElementById('galleryInput').value = '';
-        urlInput.value = '';
-        display.innerText = 'No file selected';
-        previewImg.style.display = 'none';
-        
-        document.getElementById('formTitle').innerText = "Add New Product";
-        document.getElementById('formTitle').style.color = "#ff8f00";
-        const btn = document.getElementById('uploadBtn');
-        btn.innerText = "Publish to Storefront";
-        btn.style.backgroundColor = "#ff9800";
+        editingProductId = null; selectedImageFile = null;
+        document.getElementById('newProdName').value = ''; document.getElementById('newProdPrice').value = ''; document.getElementById('newProdDesc').value = ''; document.getElementById('cameraInput').value = ''; document.getElementById('galleryInput').value = ''; urlInput.value = ''; display.innerText = 'No file selected'; previewImg.style.display = 'none';
+        document.getElementById('formTitle').innerText = "Add New Product"; document.getElementById('formTitle').style.color = "#ff8f00";
+        const btn = document.getElementById('uploadBtn'); btn.innerText = "Publish to Storefront"; btn.style.backgroundColor = "#ff9800";
         document.getElementById('cancelEditBtn').style.display = "none";
     }
 
@@ -249,13 +255,9 @@
         
         if(!name || !price) { alert("Name and Price are required!"); return; }
 
-        const btn = document.getElementById('uploadBtn');
-        btn.innerText = "Processing..."; btn.disabled = true;
-
-        // Start with whatever is in the URL box
+        const btn = document.getElementById('uploadBtn'); btn.innerText = "Processing..."; btn.disabled = true;
         let finalImageUrl = urlInput.value.trim();
         
-        // If they picked a file, upload it and override the URL box
         if (selectedImageFile) {
             const fileName = `${Math.random()}.${selectedImageFile.name.split('.').pop()}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-images').upload(fileName, selectedImageFile);
@@ -266,19 +268,13 @@
         if (editingProductId) {
             const updates = { name: name, price: price, description: desc, category: cat, image_url: finalImageUrl };
             const { error } = await supabaseClient.from('products').update(updates).eq('id', editingProductId);
-            if (error) { alert("Error updating product: " + error.message); } 
-            else { alert("Product Updated Successfully!"); }
+            if (error) { alert("Error updating product: " + error.message); } else { alert("Product Updated Successfully!"); }
         } else {
-            const { error } = await supabaseClient.from('products').insert([{ 
-                name: name, price: price, description: desc, category: cat, status: 'Available', image_url: finalImageUrl 
-            }]);
-            if (error) { alert("Error adding product: " + error.message); } 
-            else { alert("Product published!"); }
+            const { error } = await supabaseClient.from('products').insert([{ name: name, price: price, description: desc, category: cat, status: 'Available', image_url: finalImageUrl }]);
+            if (error) { alert("Error adding product: " + error.message); } else { alert("Product published!"); }
         }
 
-        btn.disabled = false;
-        cancelEdit(); 
-        fetchProducts(); 
+        btn.disabled = false; cancelEdit(); fetchProducts(); 
     }
 
     async function updateProdStatus(rawId) {
