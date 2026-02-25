@@ -3,227 +3,204 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Never Hide Data Hub - Premium Data Bundles</title>
+    <title>Never Hide Data Hub</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 0; }
+        .navbar { background-color: #0d47a1; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .container { max-width: 800px; margin: 20px auto; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; box-sizing: border-box; }
+        button { background-color: #ff9800; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.3s; }
+        button:hover { opacity: 0.9; }
         
-        .navbar { background-color: #1a1a1a; color: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .navbar h1 { margin: 0; font-size: 20px; color: #4CAF50; letter-spacing: 1px; text-transform: uppercase; }
-        .nav-btn { background-color: #4CAF50; color: white; text-decoration: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; transition: background 0.3s; }
-        .nav-btn:hover { background-color: #388E3C; }
-
-        .hero { background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%); color: white; padding: 60px 5%; text-align: center; }
-        .hero h2 { font-size: 36px; margin-bottom: 10px; }
-        .hero p { font-size: 18px; max-width: 600px; margin: 0 auto 20px auto; color: #e3f2fd; }
-        .hero-btn { background-color: #ffcc00; color: #111; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 30px; cursor: pointer; text-transform: uppercase; text-decoration: none; display: inline-block; margin-top: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
-
-        .features { padding: 50px 5%; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; text-align: center; }
-        .feature-card { background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .feature-icon { font-size: 40px; margin-bottom: 15px; }
-        .feature-card h3 { margin-top: 0; color: #0d47a1; }
-
-        .auth-container { max-width: 400px; margin: 40px auto 60px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-top: 5px solid #4CAF50; }
-        .auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; font-weight: bold; color: #888; transition: 0.3s; }
-        .tab.active { color: #4CAF50; border-bottom: 3px solid #4CAF50; }
+        /* THE NEW DIGITAL WALLET DESIGN */
+        .wallet-card { background: linear-gradient(135deg, #2e7d32, #1b5e20); color: white; padding: 25px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; box-shadow: 0 6px 12px rgba(46,125,50,0.3); flex-wrap: wrap; gap: 15px; }
+        .wallet-card h3 { margin: 0; font-size: 14px; opacity: 0.9; text-transform: uppercase; letter-spacing: 1px; }
+        .wallet-card h1 { margin: 5px 0 0 0; font-size: 36px; }
+        .top-up-btn { background: white; color: #2e7d32; width: auto; padding: 10px 20px; border-radius: 30px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         
-        .form-group { margin-bottom: 15px; text-align: left; }
-        .form-group label { display: block; font-size: 14px; font-weight: bold; margin-bottom: 5px; color: #555; }
-        .form-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 14px; }
-        
-        .submit-btn { width: 100%; background-color: #4CAF50; color: white; border: none; padding: 12px; font-size: 16px; font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
-        .submit-btn:hover { background-color: #388E3C; }
-        #authMessage { margin-top: 15px; font-size: 14px; font-weight: bold; text-align: center; }
-
-        .footer { background: #1a1a1a; color: #888; text-align: center; padding: 20px; font-size: 14px; }
-        
-        /* New Warning Box CSS */
-        .email-warning { background: #fff3cd; color: #856404; padding: 12px; border-radius: 6px; font-size: 13px; font-weight: bold; margin-bottom: 20px; text-align: center; border: 1px solid #ffeeba; display: none; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .product-item { background: white; border: 1px solid #eee; border-radius: 10px; padding: 15px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .product-item img { max-width: 100%; height: 140px; object-fit: cover; border-radius: 6px; margin-bottom: 10px; }
+        .buy-btn { background-color: #1976d2; margin-top: 15px; border-radius: 30px; }
     </style>
 </head>
 <body>
 
-    <div class="navbar">
-        <h1>Data Hub</h1>
-        <a href="#auth-section" class="nav-btn">Portal Access</a>
+<div class="navbar">
+    <h1 style="margin: 0; font-size: 18px;">Never Hide Data Hub</h1>
+    <button onclick="logOut()" id="logoutBtn" style="display: none; width: auto; padding: 8px 15px; background: #d32f2f; margin: 0; border-radius: 5px;">Logout</button>
+</div>
+
+<div class="container" id="authSection">
+    <div class="card" style="max-width: 400px; margin: 40px auto; text-align: center;">
+        <h2 style="color: #0d47a1; margin-top: 0;">Welcome Back</h2>
+        <p style="color: #666; font-size: 14px; margin-bottom: 20px;">Sign in to access your digital wallet and buy bundles.</p>
+        <input type="email" id="email" placeholder="Email Address">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="signIn()" style="background-color: #1976d2; margin-top: 20px;">Sign In</button>
+        <button onclick="signUp()" style="background-color: #fff; color: #1976d2; border: 2px solid #1976d2; margin-top: 10px;">Create Account</button>
     </div>
+</div>
 
-    <div class="hero">
-        <h2>Premium Data & Services</h2>
-        <p>Get the cheapest, most reliable MTN, Telecel, and AirtelTigo data bundles delivered instantly to your device. Seamless ECG payments and more.</p>
-        <a href="#auth-section" class="hero-btn">Start Saving Now</a>
-    </div>
-
-    <div class="features">
-        <div class="feature-card">
-            <div class="feature-icon">⚡</div>
-            <h3>Instant Delivery</h3>
-            <p>Our automated systems ensure your data bundles hit your phone within seconds of purchase.</p>
+<div class="container" id="storeSection" style="display: none;">
+    
+    <div class="wallet-card">
+        <div>
+            <h3>My Digital Wallet</h3>
+            <h1 id="walletBalanceDisplay">0.00 GHS</h1>
+            <p style="margin: 5px 0 0 0; font-size: 13px; opacity: 0.8;" id="userEmailDisplay"></p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">🔒</div>
-            <h3>Secure Vault</h3>
-            <p>Enterprise-grade security and end-to-end encryption to keep your account and purchases safe.</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">🎧</div>
-            <h3>24/7 Support</h3>
-            <p>Direct VIP access to the CEO via WhatsApp for immediate assistance and order tracking.</p>
-        </div>
-    </div>
-
-    <div id="auth-section" class="auth-container">
-        <div class="auth-tabs">
-            <div class="tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
-            <div class="tab" id="tab-register" onclick="switchTab('register')">Create Account</div>
-        </div>
-
-        <div id="emailWarningBox" class="email-warning">
-            💡 Safety Notice: Please use your real, active Gmail or email address. You will need it to recover your account if you forget your password!
-        </div>
-
-        <div class="form-group">
-            <label>Email Address</label>
-            <input type="email" id="email" placeholder="you@example.com">
-        </div>
-        <div class="form-group" id="passwordGroup">
-            <label>Password</label>
-            <input type="password" id="password" placeholder="••••••••">
-        </div>
-        
-        <div style="text-align: right; margin-top: -10px; margin-bottom: 15px;" id="forgotPassContainer">
-            <a href="javascript:void(0)" onclick="switchTab('reset')" style="font-size: 12px; color: #1976d2; text-decoration: none; font-weight: bold;">Forgot Password?</a>
-        </div>
-
-        <button class="submit-btn" id="actionBtn" onclick="handleAuth()">Access Dashboard</button>
-        <div id="authMessage"></div>
-
-        <div style="text-align: center; margin-top: 15px; display: none;" id="backToLoginBox">
-            <a href="javascript:void(0)" onclick="switchTab('login')" style="font-size: 13px; color: #555; text-decoration: underline;">Back to Login</a>
+        <div>
+            <button class="top-up-btn" onclick="requestTopUp()">➕ Top Up Funds</button>
         </div>
     </div>
 
-    <div class="footer">
-        &copy; 2026 Never Hide Data Hub. All rights reserved.
+    <h2 style="color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px;">Available Products</h2>
+    <div id="storeProducts" class="product-grid">
+        <p style="color: #888; font-style: italic;">Loading storefront...</p>
     </div>
 
-    <script>
-        const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
-        const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    <div class="card" style="margin-top: 40px; border-top: 4px solid #ff9800;">
+        <h3 style="margin-top: 0; color: #ff9800;">📞 Support & Top-Up Requests</h3>
+        <p style="font-size: 14px; color: #666;">Want to add money to your wallet? Send MoMo to <strong>0599931348</strong> or <strong>0248503631</strong> (Sulley Alhassan), then submit your Transaction ID here!</p>
+        <select id="ticketType">
+            <option value="Wallet Top-Up">Wallet Top-Up Notification</option>
+            <option value="Order Issue">Order Issue</option>
+            <option value="General Question">General Question</option>
+        </select>
+        <textarea id="ticketDetails" rows="4" placeholder="Enter MoMo Transaction ID or your issue details here..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-top: 10px; font-family: inherit;"></textarea>
+        <button onclick="submitTicket()" style="background-color: #ff9800; margin-top: 15px;">Send Message to Boss</button>
+    </div>
+</div>
 
-        let currentMode = 'login';
+<script>
+    const supabaseUrl = 'https://obyemhakouoipngwldsg.supabase.co';
+    const supabaseKey = 'sb_publishable_oB_5NVgxwkwUucCECTzb2Q_1K0VqmyT';
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    let currentUser = null;
 
-        async function checkSession() {
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                if (event === 'PASSWORD_RECOVERY') {
-                    window.location.replace('dashboard.html');
-                }
-            });
-
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                window.location.replace('dashboard.html');
-            }
-        }
-        checkSession();
-
-        function switchTab(mode) {
-            currentMode = mode;
-            document.getElementById('authMessage').innerText = "";
+    async function checkAuth() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            currentUser = session.user;
             
-            const loginTab = document.getElementById('tab-login');
-            const regTab = document.getElementById('tab-register');
-            const passGroup = document.getElementById('passwordGroup');
-            const forgotContainer = document.getElementById('forgotPassContainer');
-            const backBtnBox = document.getElementById('backToLoginBox');
-            const btn = document.getElementById('actionBtn');
-            const warningBox = document.getElementById('emailWarningBox');
-
-            if (mode === 'reset') {
-                loginTab.classList.remove('active');
-                regTab.classList.remove('active');
-                passGroup.style.display = 'none';
-                forgotContainer.style.display = 'none';
-                backBtnBox.style.display = 'block';
-                warningBox.style.display = 'none';
-                btn.innerText = 'Send Reset Link';
-            } else {
-                passGroup.style.display = 'block';
-                backBtnBox.style.display = 'none';
-                
-                if (mode === 'login') {
-                    loginTab.classList.add('active');
-                    regTab.classList.remove('active');
-                    forgotContainer.style.display = 'block';
-                    warningBox.style.display = 'none';
-                    btn.innerText = 'Access Dashboard';
-                } else {
-                    loginTab.classList.remove('active');
-                    regTab.classList.add('active');
-                    forgotContainer.style.display = 'none';
-                    warningBox.style.display = 'block'; // SHOW WARNING ON REGISTER TAB
-                    btn.innerText = 'Create Secure Account';
-                }
-            }
-        }
-
-        async function handleAuth() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const msgBox = document.getElementById('authMessage');
-
-            if (!email) {
-                msgBox.style.color = 'red';
-                msgBox.innerText = 'Please enter your email address.';
+            // REDIRECT BOSS TO ADMIN DASHBOARD IMMEDIATELY
+            if(currentUser.email === "ghanacyber2@gmail.com") {
+                window.location.replace('admin.html');
                 return;
             }
 
-            msgBox.style.color = '#555';
-            msgBox.innerText = 'Processing...';
-
-            if (currentMode === 'reset') {
-                const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-                    redirectTo: 'https://never-hide-data-hub.vercel.app/index.html',
-                });
-                
-                if (error) { msgBox.style.color = 'red'; msgBox.innerText = error.message; } 
-                else { msgBox.style.color = 'green'; msgBox.innerText = 'Reset link sent! Check your inbox.'; }
-                return; 
-            }
-
-            if (!password) {
-                msgBox.style.color = 'red';
-                msgBox.innerText = 'Please enter your password.';
-                return;
-            }
-
-            if (currentMode === 'register') {
-                const { data, error } = await supabaseClient.auth.signUp({ email, password });
-                if (error) { msgBox.style.color = 'red'; msgBox.innerText = error.message; } 
-                else {
-                    msgBox.style.color = 'green';
-                    msgBox.innerText = 'Account created successfully! Logging you in...';
-                    setTimeout(() => window.location.replace('dashboard.html'), 1500);
-                }
-            } else {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) { msgBox.style.color = 'red'; msgBox.innerText = error.message; } 
-                else {
-                    msgBox.style.color = 'green';
-                    msgBox.innerText = 'Vault unlocked. Redirecting...';
-                    logDevice(email); 
-                    setTimeout(() => window.location.replace('dashboard.html'), 1000);
-                }
-            }
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('storeSection').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'block';
+            document.getElementById('userEmailDisplay').innerText = currentUser.email;
+            
+            fetchMyWallet();
+            fetchProducts();
+        } else {
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('storeSection').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'none';
         }
+    }
 
-        async function logDevice(userEmail) {
-            const userAgent = navigator.userAgent;
-            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            await supabaseClient.from('device_logs').insert([{ user_email: userEmail, device_info: userAgent, timezone: timeZone }]);
+    async function signUp() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        if(!email || !password) { alert("Enter email and password!"); return; }
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if(error) alert(error.message); else { alert("Account created! Logging in..."); checkAuth(); }
+    }
+
+    async function signIn() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        if(!email || !password) { alert("Enter email and password!"); return; }
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if(error) alert(error.message); else checkAuth();
+    }
+
+    async function logOut() {
+        await supabaseClient.auth.signOut();
+        currentUser = null;
+        checkAuth();
+    }
+
+    // THE ENGINE THAT FETCHES THE CUSTOMER'S MONEY
+    async function fetchMyWallet() {
+        const { data, error } = await supabaseClient
+            .from('user_profiles')
+            .select('wallet_balance')
+            .eq('user_email', currentUser.email)
+            .single();
+            
+        let balance = 0;
+        if (data && data.wallet_balance !== null) {
+            balance = data.wallet_balance;
         }
-    </script>
+        
+        // Display it nicely with 2 decimal places (e.g. 20.00 GHS)
+        document.getElementById('walletBalanceDisplay').innerText = parseFloat(balance).toFixed(2) + " GHS";
+    }
+
+    function requestTopUp() {
+        alert("To add money: Send MoMo to 0599931348 (Sulley Alhassan). Then use the Support Box at the bottom to send the Transaction ID!");
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        document.getElementById('ticketType').value = 'Wallet Top-Up';
+        document.getElementById('ticketDetails').focus();
+    }
+
+    async function fetchProducts() {
+        const container = document.getElementById('storeProducts');
+        const { data, error } = await supabaseClient.from('products').select('*').eq('status', 'Available').order('id', { ascending: false });
+        
+        if (error || !data) { container.innerHTML = '<p style="color: red;">Error loading products.</p>'; return; }
+        if (data.length === 0) { container.innerHTML = '<p style="color: #888;">No products currently available.</p>'; return; }
+
+        let html = '';
+        data.forEach(prod => {
+            let imgHtml = prod.image_url ? `<img src="${prod.image_url}" alt="${prod.name}">` : `<div style="height: 140px; background: #eee; border-radius: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999;">No Image</div>`;
+            html += `
+                <div class="product-item">
+                    ${imgHtml}
+                    <h3 style="margin: 0 0 5px 0; color: #333; font-size: 16px;">${prod.name}</h3>
+                    <p style="color: #2e7d32; font-weight: bold; font-size: 20px; margin: 5px 0;">${prod.price}</p>
+                    <p style="font-size: 12px; color: #666; margin: 5px 0;">${prod.description || ''}</p>
+                    <button class="buy-btn" onclick="alert('Digital Wallet purchasing feature is being installed right now! Check back soon.')">Buy with Wallet</button>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    async function submitTicket() {
+        const type = document.getElementById('ticketType').value;
+        const details = document.getElementById('ticketDetails').value;
+        if(!details) { alert("Please enter the transaction ID or details!"); return; }
+        
+        const btn = event.target;
+        btn.innerText = "Sending..."; btn.disabled = true;
+
+        const { error } = await supabaseClient.from('support_tickets').insert([{
+            user_email: currentUser.email,
+            issue_type: type,
+            issue_details: details,
+            status: 'Pending'
+        }]);
+
+        btn.innerText = "Send Message to Boss"; btn.disabled = false;
+
+        if (error) {
+            alert("Error: " + error.message);
+        } else { 
+            alert("Message sent successfully! The Boss will update your wallet shortly."); 
+            document.getElementById('ticketDetails').value = ''; 
+        }
+    }
+
+    checkAuth();
+</script>
 </body>
 </html>
