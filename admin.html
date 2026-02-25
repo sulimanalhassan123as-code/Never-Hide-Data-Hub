@@ -14,20 +14,20 @@
         .header-text { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
         .ticket-card { background: #fff; padding: 15px; margin-bottom: 20px; border-left: 5px solid #0d47a1; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; }
         .product-card { background: #fff; padding: 15px; margin-bottom: 15px; border-left: 5px solid #ff9800; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #eee; padding-bottom: 12px; margin-bottom: 12px; font-size: 14px; }
-        .ticket-text { margin: 10px 0; font-size: 15px; color: #222; background: #f9f9f9; padding: 10px; border-radius: 4px; border: 1px solid #eee; }
         .admin-controls { display: flex; gap: 10px; margin-top: 15px; align-items: center; flex-wrap: wrap; width: 100%; }
         select, input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; box-sizing: border-box; }
         input[type="text"] { flex-grow: 1; min-width: 200px; }
         .update-btn { background-color: #1976d2; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .update-btn:hover { background-color: #115293; }
         .add-btn { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; font-size: 16px;}
         .delete-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .wa-btn { background-color: #25D366; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         
-        .image-upload-box { background: #fff; padding: 10px; border: 1px dashed #ff9800; border-radius: 4px; text-align: center; grid-column: span 2; }
-        .image-upload-box label { font-size: 13px; font-weight: bold; color: #e65100; display: block; margin-bottom: 5px; }
+        /* THE NEW BEAUTIFUL IMAGE UPLOAD UI */
+        .image-upload-box { background: #fff; padding: 20px; border: 2px dashed #ff9800; border-radius: 8px; text-align: center; grid-column: span 2; transition: 0.3s; }
+        .image-upload-box:hover { background: #fff3e0; }
+        .custom-file-btn { background-color: #e65100; color: white; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; display: inline-block; font-size: 14px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input[type="file"] { display: none; } /* Hides the ugly default button */
         
         @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .image-upload-box { grid-column: span 1; } }
     </style>
@@ -60,8 +60,9 @@
             </select>
             
             <div class="image-upload-box">
-                <label>📸 Product Image (Optional - Leave blank for Data Bundles)</label>
-                <input type="file" id="newProdImage" accept="image/jpeg, image/png, image/webp" style="width: 100%;">
+                <label for="newProdImage" class="custom-file-btn">📸 Tap to Select Picture</label>
+                <input type="file" id="newProdImage" accept="image/*" onchange="updateFileName()">
+                <p id="fileNameDisplay" style="font-size: 13px; color: #666; margin: 10px 0 0 0;">No picture selected (Leave blank for Data Bundles)</p>
             </div>
         </div>
         <button class="add-btn" id="uploadBtn" onclick="addProduct()">Publish to Storefront</button>
@@ -90,6 +91,17 @@
     // Kept your official CEO email!
     const ADMIN_EMAIL = "ghanacyber2@gmail.com"; 
 
+    // Update text when user picks a photo
+    function updateFileName() {
+        const input = document.getElementById('newProdImage');
+        const display = document.getElementById('fileNameDisplay');
+        if (input.files.length > 0) {
+            display.innerHTML = `<strong style="color: #2e7d32;">✅ Picture Selected: ${input.files[0].name}</strong>`;
+        } else {
+            display.innerText = "No picture selected (Leave blank for Data Bundles)";
+        }
+    }
+
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session || session.user.email !== ADMIN_EMAIL) {
@@ -113,7 +125,7 @@
             let imgPreview = prod.image_url ? `<img src="${prod.image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">` : `<div style="width: 50px; height: 50px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">No Img</div>`;
 
             html += `
-                <div class="product-card">
+                <div class="product-card" id="product-row-${prod.id}">
                     <div style="display: flex; gap: 15px; align-items: center; flex-grow: 1;">
                         ${imgPreview}
                         <div>
@@ -123,12 +135,12 @@
                     </div>
                     <div class="admin-controls" style="width: auto; margin-top: 0;">
                         <select id="prod-status-${prod.id}">
-                            <option value="Available" ${prod.status === 'Available' ? 'selected' : ''}>⚡ Available</option>
-                            <option value="Coming Soon" ${prod.status === 'Coming Soon' ? 'selected' : ''}>🔜 Coming Soon</option>
-                            <option value="Out of Stock" ${prod.status === 'Out of Stock' ? 'selected' : ''}>🔌 Out of Stock</option>
+                            <option value="Available" ${prod.status === 'Available' ? 'selected' : ''}>🟢 Available</option>
+                            <option value="Coming Soon" ${prod.status === 'Coming Soon' ? 'selected' : ''}>🟡 Coming Soon</option>
+                            <option value="Out of Stock" ${prod.status === 'Out of Stock' ? 'selected' : ''}>🔴 Out of Stock</option>
                         </select>
                         <button class="update-btn" onclick="updateProdStatus('${prod.id}')">Update</button>
-                        <button class="delete-btn" onclick="deleteProduct('${prod.id}')">🗑️</button>
+                        <button class="delete-btn" onclick="deleteProduct('${prod.id}')">🗑️ Delete</button>
                     </div>
                 </div>
             `;
@@ -165,7 +177,6 @@
                 btn.disabled = false;
                 return;
             }
-
             const { data } = supabaseClient.storage.from('product-images').getPublicUrl(fileName);
             finalImageUrl = data.publicUrl;
         }
@@ -184,31 +195,53 @@
             document.getElementById('newProdPrice').value = '';
             document.getElementById('newProdDesc').value = '';
             document.getElementById('newProdImage').value = '';
+            document.getElementById('fileNameDisplay').innerText = 'No picture selected';
             fetchProducts();
         }
     }
 
-    // FIX 2: Smart ID Checker for Update and Delete
-    async function updateProdStatus(id) {
-        const targetId = /^\d+$/.test(id) ? parseInt(id) : id;
-        const newStatus = document.getElementById(`prod-status-${id}`).value;
+    async function updateProdStatus(rawId) {
+        let targetId = rawId;
+        if (/^\d+$/.test(rawId)) { targetId = parseInt(rawId); }
+        
+        const newStatus = document.getElementById(`prod-status-${rawId}`).value;
         const { error } = await supabaseClient.from('products').update({ status: newStatus }).eq('id', targetId);
-        if (error) alert("Error: " + error.message); else { alert("Status updated!"); fetchProducts(); }
+        if (error) {
+            alert("Vault Error Updating: " + error.message); 
+        } else { 
+            alert("Status updated!"); 
+        }
     }
 
-    async function deleteProduct(id) {
-        if(confirm("Are you sure you want to delete this product forever?")) {
-            const targetId = /^\d+$/.test(id) ? parseInt(id) : id;
-            const { error } = await supabaseClient.from('products').delete().eq('id', targetId);
+    // THE COMPLETELY REWRITTEN DELETE ENGINE WITH DEBUG ALARMS
+    async function deleteProduct(rawId) {
+        if(confirm("Are you sure you want to delete this item forever?")) {
+            
+            // Try to figure out if Supabase wants a number or a string
+            let targetId = rawId;
+            if (/^\d+$/.test(rawId)) { 
+                targetId = parseInt(rawId); 
+            }
+
+            // Command the vault to delete
+            const { data, error } = await supabaseClient
+                .from('products')
+                .delete()
+                .eq('id', targetId);
             
             if (error) {
-                alert("Error deleting: " + error.message); 
+                // If it fails, pop up exactly WHY it failed
+                alert("DELETE FAILED! The vault said: " + error.message); 
             } else { 
-                fetchProducts(); 
+                alert("Item successfully deleted!");
+                // Make it disappear from the screen immediately
+                const row = document.getElementById(`product-row-${rawId}`);
+                if(row) row.style.display = 'none';
             }
         }
     }
 
+    // Ticket queue logic remains perfectly intact below
     async function fetchAllTickets() {
         const container = document.getElementById('allTicketsContainer');
         const { data: tickets, error: tError } = await supabaseClient.from('support_tickets').select('*').order('created_at', { ascending: false });
