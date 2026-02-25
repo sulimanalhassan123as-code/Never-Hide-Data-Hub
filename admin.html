@@ -7,24 +7,27 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e3f2fd; color: #333; margin: 0; padding: 0; }
-        .navbar { background-color: #0d47a1; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .navbar { background-color: #0d47a1; color: #fff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); position: sticky; top: 0; z-index: 100; }
         .navbar h1 { margin: 0; font-size: 18px; color: #90caf9; letter-spacing: 1px; text-transform: uppercase; }
         .logout-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .container { max-width: 800px; margin: 30px auto; padding: 30px; background: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .header-text { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
         .ticket-card { background: #fff; padding: 15px; margin-bottom: 20px; border-left: 5px solid #0d47a1; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; }
         .product-card { background: #fff; padding: 15px; margin-bottom: 15px; border-left: 5px solid #ff9800; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .admin-controls { display: flex; gap: 10px; margin-top: 15px; align-items: center; flex-wrap: wrap; width: 100%; }
+        .admin-controls { display: flex; gap: 8px; margin-top: 15px; align-items: center; flex-wrap: wrap; width: 100%; }
         select, input[type="text"] { padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: inherit; box-sizing: border-box; }
         input[type="text"] { flex-grow: 1; min-width: 200px; }
         .update-btn { background-color: #1976d2; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .add-btn { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; font-size: 16px;}
-        .delete-btn { background-color: #d32f2f; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .edit-btn { background-color: #0288d1; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .add-btn { background-color: #ff9800; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; font-size: 16px; transition: 0.3s; }
+        .delete-btn { background-color: #d32f2f; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .wa-btn { background-color: #25D366; color: white; text-decoration: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; }
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .image-upload-box { background: #fff; padding: 20px; border: 2px dashed #ff9800; border-radius: 8px; text-align: center; grid-column: span 2; transition: 0.3s; }
+        
+        .image-upload-box { background: #fff; padding: 20px; border: 2px dashed #ff9800; border-radius: 8px; text-align: center; grid-column: span 2; }
         .custom-file-btn { background-color: #e65100; color: white; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; display: inline-block; font-size: 14px; }
         input[type="file"] { display: none; }
+        
         @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .image-upload-box { grid-column: span 1; } }
     </style>
 </head>
@@ -38,11 +41,11 @@
 <div class="container" style="border-top: 5px solid #ff9800;">
     <div class="header-text">
         <h2 style="color: #e65100; margin-top: 0;">📦 Storefront Inventory</h2>
-        <p style="color: #666; font-size: 14px; margin-bottom: 0;">Add new bundles, ECG services, or physical products with images.</p>
+        <p style="color: #666; font-size: 14px; margin-bottom: 0;">Add new bundles or edit existing ones.</p>
     </div>
 
-    <div style="background: #fff8e1; padding: 20px; border-radius: 8px; border: 1px solid #ffecb3; margin-bottom: 30px;">
-        <h3 style="margin-top: 0; color: #ff8f00;">Add New Product</h3>
+    <div id="productFormArea" style="background: #fff8e1; padding: 20px; border-radius: 8px; border: 1px solid #ffecb3; margin-bottom: 30px;">
+        <h3 id="formTitle" style="margin-top: 0; color: #ff8f00;">Add New Product</h3>
         <div class="form-grid">
             <input type="text" id="newProdName" placeholder="Product Name (e.g. MTN 10GB)">
             <input type="text" id="newProdPrice" placeholder="Price (e.g. 100 GHS)">
@@ -54,13 +57,17 @@
                 <option value="ecg">ECG Bill</option>
                 <option value="ad">Physical Product / Ad</option>
             </select>
+            
             <div class="image-upload-box">
                 <label for="newProdImage" class="custom-file-btn">📸 Tap to Select Picture</label>
-                <input type="file" id="newProdImage" accept="image/*" onchange="updateFileName()">
+                <input type="file" id="newProdImage" accept="image/*">
                 <p id="fileNameDisplay" style="font-size: 13px; color: #666; margin: 10px 0 0 0;">No picture selected (Leave blank for Data Bundles)</p>
+                
+                <img id="preview" style="display: none; width: 200px; margin: 15px auto 0 auto; border-radius: 8px; border: 2px solid #ccc;">
             </div>
         </div>
-        <button class="add-btn" id="uploadBtn" onclick="addProduct()">Publish to Storefront</button>
+        <button class="add-btn" id="uploadBtn" onclick="saveProduct()">Publish to Storefront</button>
+        <button class="add-btn" id="cancelEditBtn" style="background-color: #666; display: none;" onclick="cancelEdit()">Cancel Edit</button>
     </div>
 
     <h3 style="color: #333;">Live Products</h3>
@@ -84,12 +91,31 @@
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     const ADMIN_EMAIL = "ghanacyber2@gmail.com"; 
 
-    function updateFileName() {
-        const input = document.getElementById('newProdImage');
-        const display = document.getElementById('fileNameDisplay');
-        if (input.files.length > 0) { display.innerHTML = `<strong style="color: #2e7d32;">✅ Picture Selected: ${input.files[0].name}</strong>`; } 
-        else { display.innerText = "No picture selected (Leave blank for Data Bundles)"; }
-    }
+    // Global variables for the Editing Engine
+    let liveProductsArray = [];
+    let editingProductId = null;
+
+    // YOUR FILEREADER CODE
+    document.getElementById("newProdImage").addEventListener("change", function(event) {
+        const file = event.target.files[0];
+        const display = document.getElementById("fileNameDisplay");
+        const previewImg = document.getElementById("preview");
+
+        if (!file) {
+            display.innerText = "No picture selected";
+            previewImg.style.display = "none";
+            return;
+        }
+
+        display.innerHTML = `<strong style="color: #2e7d32;">✅ Selected: ${file.name}</strong>`;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            previewImg.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+    });
 
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -104,7 +130,9 @@
         if (error || !data) { container.innerHTML = '<p style="color: red;">Error loading inventory.</p>'; return; }
         if (data.length === 0) { container.innerHTML = '<p style="color: #888;">No products yet.</p>'; return; }
 
+        liveProductsArray = data; // Save to global array for quick editing
         let html = '';
+        
         data.forEach(prod => {
             let imgPreview = prod.image_url ? `<img src="${prod.image_url}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;">` : `<div style="width: 50px; height: 50px; background: #eee; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999;">No Img</div>`;
             html += `
@@ -122,8 +150,11 @@
                             <option value="Coming Soon" ${prod.status === 'Coming Soon' ? 'selected' : ''}>🟡 Coming Soon</option>
                             <option value="Out of Stock" ${prod.status === 'Out of Stock' ? 'selected' : ''}>🔴 Out of Stock</option>
                         </select>
-                        <button class="update-btn" onclick="updateProdStatus('${prod.id}')">Update</button>
-                        <button class="delete-btn" onclick="deleteProduct('${prod.id}')">🗑️ Delete</button>
+                        <button class="update-btn" onclick="updateProdStatus('${prod.id}')">Set Status</button>
+                        
+                        <button class="edit-btn" onclick="loadEditForm('${prod.id}')">✏️ Edit</button>
+                        
+                        <button class="delete-btn" onclick="deleteProduct('${prod.id}')">🗑️</button>
                     </div>
                 </div>
             `;
@@ -131,28 +162,96 @@
         container.innerHTML = html;
     }
 
-    async function addProduct() {
+    // THE EDIT FORM LOADER
+    function loadEditForm(rawId) {
+        const targetId = /^\d+$/.test(rawId) ? parseInt(rawId) : rawId;
+        const prod = liveProductsArray.find(p => p.id === targetId);
+        if (!prod) return;
+
+        editingProductId = targetId;
+        
+        // Fill the boxes
+        document.getElementById('newProdName').value = prod.name;
+        document.getElementById('newProdPrice').value = prod.price;
+        document.getElementById('newProdDesc').value = prod.description || "";
+        document.getElementById('newProdCat').value = prod.category;
+        
+        // Change the UI to "Edit Mode"
+        document.getElementById('formTitle').innerText = "✏️ Edit Product Details";
+        document.getElementById('formTitle').style.color = "#0288d1";
+        
+        const btn = document.getElementById('uploadBtn');
+        btn.innerText = "💾 Save Changes";
+        btn.style.backgroundColor = "#0288d1";
+        
+        document.getElementById('cancelEditBtn').style.display = "block";
+        
+        // Scroll Boss to the top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+        editingProductId = null;
+        document.getElementById('newProdName').value = '';
+        document.getElementById('newProdPrice').value = '';
+        document.getElementById('newProdDesc').value = '';
+        document.getElementById('newProdImage').value = '';
+        document.getElementById('fileNameDisplay').innerText = 'No picture selected';
+        document.getElementById('preview').style.display = 'none';
+        
+        document.getElementById('formTitle').innerText = "Add New Product";
+        document.getElementById('formTitle').style.color = "#ff8f00";
+        
+        const btn = document.getElementById('uploadBtn');
+        btn.innerText = "Publish to Storefront";
+        btn.style.backgroundColor = "#ff9800";
+        
+        document.getElementById('cancelEditBtn').style.display = "none";
+    }
+
+    // UPDATED SAVE FUNCTION (Handles both Add and Edit)
+    async function saveProduct() {
         const name = document.getElementById('newProdName').value;
         const price = document.getElementById('newProdPrice').value;
         const desc = document.getElementById('newProdDesc').value;
         const cat = document.getElementById('newProdCat').value;
         const imageFile = document.getElementById('newProdImage').files[0];
+        
         if(!name || !price) { alert("Name and Price are required!"); return; }
 
         const btn = document.getElementById('uploadBtn');
-        btn.innerText = "Uploading to Cloud..."; btn.disabled = true;
+        btn.innerText = "Processing..."; btn.disabled = true;
 
         let finalImageUrl = "";
+        
+        // Handle image upload if a new picture was selected
         if (imageFile) {
             const fileName = `${Math.random()}.${imageFile.name.split('.').pop()}`;
             const { error: uploadError } = await supabaseClient.storage.from('product-images').upload(fileName, imageFile);
-            if (uploadError) { alert("Image upload failed!"); btn.innerText = "Publish to Storefront"; btn.disabled = false; return; }
+            if (uploadError) { alert("Image upload failed: " + uploadError.message); cancelEdit(); btn.disabled = false; return; }
             finalImageUrl = supabaseClient.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
         }
 
-        const { error } = await supabaseClient.from('products').insert([{ name: name, price: price, description: desc, category: cat, status: 'Available', image_url: finalImageUrl }]);
-        btn.innerText = "Publish to Storefront"; btn.disabled = false;
-        if (error) { alert("Error adding product."); } else { fetchProducts(); }
+        if (editingProductId) {
+            // WE ARE EDITING AN EXISTING PRODUCT
+            const updates = { name: name, price: price, description: desc, category: cat };
+            if (finalImageUrl) updates.image_url = finalImageUrl; // Only update image if a new one was uploaded
+
+            const { error } = await supabaseClient.from('products').update(updates).eq('id', editingProductId);
+            if (error) { alert("Error updating product: " + error.message); } 
+            else { alert("Product Updated Successfully!"); }
+        } else {
+            // WE ARE ADDING A NEW PRODUCT
+            const { error } = await supabaseClient.from('products').insert([{ 
+                name: name, price: price, description: desc, category: cat, status: 'Available', image_url: finalImageUrl 
+            }]);
+            if (error) { alert("Error adding product: " + error.message); } 
+            else { alert("Product published!"); }
+        }
+
+        btn.disabled = false;
+        cancelEdit(); // Clears form and resets buttons
+        fetchProducts(); // Reloads the list
     }
 
     async function updateProdStatus(rawId) {
@@ -162,26 +261,16 @@
         if (error) alert("Error: " + error.message); else alert("Status updated!");
     }
 
-    // THE STRICT DELETE ENGINE
     async function deleteProduct(rawId) {
         if(confirm("Are you sure you want to delete this item forever?")) {
             const targetId = /^\d+$/.test(rawId) ? parseInt(rawId) : rawId;
-            
-            // We added .select() so the vault HAS to confirm it deleted something
-            const { data, error } = await supabaseClient.from('products').delete().eq('id', targetId).select();
-            
-            if (error) {
-                alert("Vault Error: " + error.message); 
-            } else if (data && data.length === 0) {
-                alert("Vault Warning: The product was not deleted! Check Supabase security policies.");
-            } else { 
-                alert("Item successfully deleted!");
-                fetchProducts(); // Refresh list to prove it's gone
-            }
+            const { error } = await supabaseClient.from('products').delete().eq('id', targetId);
+            if (error) { alert("Vault Error: RLS is blocking the delete! Please delete it manually in the Supabase Table Editor."); } 
+            else { alert("Item successfully deleted!"); fetchProducts(); }
         }
     }
 
-    // Tickets logic remains
+    // TICKETS LOGIC
     async function fetchAllTickets() {
         const container = document.getElementById('allTicketsContainer');
         const { data: tickets } = await supabaseClient.from('support_tickets').select('*').order('created_at', { ascending: false });
