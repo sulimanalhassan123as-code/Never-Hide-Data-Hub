@@ -25,7 +25,7 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         
         .image-upload-box { background: #fff; padding: 20px; border: 2px dashed #ff9800; border-radius: 8px; text-align: center; grid-column: span 2; }
-        .custom-file-btn { background-color: #e65100; color: white; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; display: inline-block; font-size: 14px; }
+        .custom-file-btn { color: white; padding: 10px 20px; border-radius: 30px; cursor: pointer; font-weight: bold; display: inline-block; font-size: 14px; margin: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         input[type="file"] { display: none; }
         
         @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } .image-upload-box { grid-column: span 1; } }
@@ -59,8 +59,16 @@
             </select>
             
             <div class="image-upload-box">
-                <label for="newProdImage" class="custom-file-btn">📸 Tap to Select Picture</label>
-                <input type="file" id="newProdImage" accept="image/*">
+                <p style="margin-top: 0; font-weight: bold; color: #e65100; margin-bottom: 10px;">Product Image (Optional)</p>
+                
+                <div style="display: flex; justify-content: center; flex-wrap: wrap;">
+                    <label for="cameraInput" class="custom-file-btn" style="background-color: #d32f2f;">📸 Take Photo</label>
+                    <label for="galleryInput" class="custom-file-btn" style="background-color: #1976d2;">🖼️ Pick from Photos</label>
+                </div>
+
+                <input type="file" id="cameraInput" accept="image/*" capture="environment">
+                <input type="file" id="galleryInput" accept="image/jpeg, image/png, image/webp">
+                
                 <p id="fileNameDisplay" style="font-size: 13px; color: #666; margin: 10px 0 0 0;">No picture selected (Leave blank for Data Bundles)</p>
                 
                 <img id="preview" style="display: none; width: 200px; margin: 15px auto 0 auto; border-radius: 8px; border: 2px solid #ccc;">
@@ -91,22 +99,19 @@
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
     const ADMIN_EMAIL = "ghanacyber2@gmail.com"; 
 
-    // Global variables for the Editing Engine
     let liveProductsArray = [];
     let editingProductId = null;
+    let selectedImageFile = null; // Stores the file whether it came from camera or gallery
 
-    // YOUR FILEREADER CODE
-    document.getElementById("newProdImage").addEventListener("change", function(event) {
+    // SHARED FUNCTION FOR BOTH CAMERA AND GALLERY
+    function handleImageSelection(event) {
         const file = event.target.files[0];
         const display = document.getElementById("fileNameDisplay");
         const previewImg = document.getElementById("preview");
 
-        if (!file) {
-            display.innerText = "No picture selected";
-            previewImg.style.display = "none";
-            return;
-        }
+        if (!file) return;
 
+        selectedImageFile = file; // Save it for the database upload
         display.innerHTML = `<strong style="color: #2e7d32;">✅ Selected: ${file.name}</strong>`;
 
         const reader = new FileReader();
@@ -115,7 +120,11 @@
             previewImg.style.display = "block";
         };
         reader.readAsDataURL(file);
-    });
+    }
+
+    // Attach your FileReader code to BOTH buttons
+    document.getElementById("cameraInput").addEventListener("change", handleImageSelection);
+    document.getElementById("galleryInput").addEventListener("change", handleImageSelection);
 
     async function checkSecurity() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -130,7 +139,7 @@
         if (error || !data) { container.innerHTML = '<p style="color: red;">Error loading inventory.</p>'; return; }
         if (data.length === 0) { container.innerHTML = '<p style="color: #888;">No products yet.</p>'; return; }
 
-        liveProductsArray = data; // Save to global array for quick editing
+        liveProductsArray = data; 
         let html = '';
         
         data.forEach(prod => {
@@ -151,9 +160,7 @@
                             <option value="Out of Stock" ${prod.status === 'Out of Stock' ? 'selected' : ''}>🔴 Out of Stock</option>
                         </select>
                         <button class="update-btn" onclick="updateProdStatus('${prod.id}')">Set Status</button>
-                        
                         <button class="edit-btn" onclick="loadEditForm('${prod.id}')">✏️ Edit</button>
-                        
                         <button class="delete-btn" onclick="deleteProduct('${prod.id}')">🗑️</button>
                     </div>
                 </div>
@@ -162,21 +169,17 @@
         container.innerHTML = html;
     }
 
-    // THE EDIT FORM LOADER
     function loadEditForm(rawId) {
         const targetId = /^\d+$/.test(rawId) ? parseInt(rawId) : rawId;
         const prod = liveProductsArray.find(p => p.id === targetId);
         if (!prod) return;
 
         editingProductId = targetId;
-        
-        // Fill the boxes
         document.getElementById('newProdName').value = prod.name;
         document.getElementById('newProdPrice').value = prod.price;
         document.getElementById('newProdDesc').value = prod.description || "";
         document.getElementById('newProdCat').value = prod.category;
         
-        // Change the UI to "Edit Mode"
         document.getElementById('formTitle').innerText = "✏️ Edit Product Details";
         document.getElementById('formTitle').style.color = "#0288d1";
         
@@ -185,17 +188,17 @@
         btn.style.backgroundColor = "#0288d1";
         
         document.getElementById('cancelEditBtn').style.display = "block";
-        
-        // Scroll Boss to the top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function cancelEdit() {
         editingProductId = null;
+        selectedImageFile = null;
         document.getElementById('newProdName').value = '';
         document.getElementById('newProdPrice').value = '';
         document.getElementById('newProdDesc').value = '';
-        document.getElementById('newProdImage').value = '';
+        document.getElementById('cameraInput').value = '';
+        document.getElementById('galleryInput').value = '';
         document.getElementById('fileNameDisplay').innerText = 'No picture selected';
         document.getElementById('preview').style.display = 'none';
         
@@ -205,17 +208,14 @@
         const btn = document.getElementById('uploadBtn');
         btn.innerText = "Publish to Storefront";
         btn.style.backgroundColor = "#ff9800";
-        
         document.getElementById('cancelEditBtn').style.display = "none";
     }
 
-    // UPDATED SAVE FUNCTION (Handles both Add and Edit)
     async function saveProduct() {
         const name = document.getElementById('newProdName').value;
         const price = document.getElementById('newProdPrice').value;
         const desc = document.getElementById('newProdDesc').value;
         const cat = document.getElementById('newProdCat').value;
-        const imageFile = document.getElementById('newProdImage').files[0];
         
         if(!name || !price) { alert("Name and Price are required!"); return; }
 
@@ -224,24 +224,22 @@
 
         let finalImageUrl = "";
         
-        // Handle image upload if a new picture was selected
-        if (imageFile) {
-            const fileName = `${Math.random()}.${imageFile.name.split('.').pop()}`;
-            const { error: uploadError } = await supabaseClient.storage.from('product-images').upload(fileName, imageFile);
+        // Use the global selectedImageFile
+        if (selectedImageFile) {
+            const fileName = `${Math.random()}.${selectedImageFile.name.split('.').pop()}`;
+            const { error: uploadError } = await supabaseClient.storage.from('product-images').upload(fileName, selectedImageFile);
             if (uploadError) { alert("Image upload failed: " + uploadError.message); cancelEdit(); btn.disabled = false; return; }
             finalImageUrl = supabaseClient.storage.from('product-images').getPublicUrl(fileName).data.publicUrl;
         }
 
         if (editingProductId) {
-            // WE ARE EDITING AN EXISTING PRODUCT
             const updates = { name: name, price: price, description: desc, category: cat };
-            if (finalImageUrl) updates.image_url = finalImageUrl; // Only update image if a new one was uploaded
+            if (finalImageUrl) updates.image_url = finalImageUrl; 
 
             const { error } = await supabaseClient.from('products').update(updates).eq('id', editingProductId);
             if (error) { alert("Error updating product: " + error.message); } 
             else { alert("Product Updated Successfully!"); }
         } else {
-            // WE ARE ADDING A NEW PRODUCT
             const { error } = await supabaseClient.from('products').insert([{ 
                 name: name, price: price, description: desc, category: cat, status: 'Available', image_url: finalImageUrl 
             }]);
@@ -250,8 +248,8 @@
         }
 
         btn.disabled = false;
-        cancelEdit(); // Clears form and resets buttons
-        fetchProducts(); // Reloads the list
+        cancelEdit(); 
+        fetchProducts(); 
     }
 
     async function updateProdStatus(rawId) {
@@ -270,7 +268,6 @@
         }
     }
 
-    // TICKETS LOGIC
     async function fetchAllTickets() {
         const container = document.getElementById('allTicketsContainer');
         const { data: tickets } = await supabaseClient.from('support_tickets').select('*').order('created_at', { ascending: false });
